@@ -2,6 +2,7 @@
 
 namespace oojjrs.oh
 {
+    [RequireComponent(typeof(SolidObject))]
     public class SingletonMonoBehaviourT<T> : MonoBehaviour
         where T : SingletonMonoBehaviourT<T>
     {
