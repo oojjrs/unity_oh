@@ -1,0 +1,15 @@
+{
+  "name": "com.oojjrs.oh",
+  "displayName": "oojjrs",
+  "version": "1.0.0",
+  "unity": "2022.3",
+  "description": "OOJJRS' Unity GameObject Helper",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oojjrs/unity_oh.git?path=/Assets"
+  },
+  "author": {
+    "name": "oojjrs",
+    "email": "oojjrs@gmail.com"
+  }
+}
