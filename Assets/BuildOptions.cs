@@ -3,7 +3,7 @@
     public static bool IsStandaloneTest()
     {
 #if USE_STANDALONE
-            return true;
+        return true;
 #else
         return false;
 #endif
@@ -12,7 +12,7 @@
     public static bool IsSteam()
     {
 #if USE_STEAM
-            return true;
+        return true;
 #else
         return false;
 #endif
@@ -21,7 +21,7 @@
     public static bool IsStove()
     {
 #if USE_STOVE
-            return true;
+        return true;
 #else
         return false;
 #endif
