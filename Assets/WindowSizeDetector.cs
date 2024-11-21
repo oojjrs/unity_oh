@@ -2,7 +2,6 @@
 
 namespace oojjrs.oh
 {
-    [RequireComponent(typeof(SolidObject))]
     public class WindowSizeDetector : MonoBehaviour
     {
         public interface CallbackInterface
