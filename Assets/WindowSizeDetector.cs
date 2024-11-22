@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
 namespace oojjrs.oh
 {
@@ -11,6 +12,8 @@ namespace oojjrs.oh
 
         public interface InitializerInterface
         {
+            bool IsRunning { get; }
+
             void Initialize(int width, int height);
         }
 
@@ -37,7 +40,7 @@ namespace oojjrs.oh
             }
         }
 
-        private void Start()
+        private IEnumerator Start()
         {
             if (Callbacks == default)
                 Debug.LogWarning($"{name}> DON'T HAVE CALLBACK FUNCTION.");
@@ -46,25 +49,33 @@ namespace oojjrs.oh
             CurrentWidth = Screen.width;
 
             if (Initializer != default)
+            {
+                if (Initializer.IsRunning == false)
+                    yield return new WaitUntil(() => Initializer.IsRunning);
+
                 Initializer.Initialize(CurrentWidth, CurrentHeight);
+            }
 
             Started = true;
         }
 
         private void Update()
         {
-            var time = Time.realtimeSinceStartup;
-            if (time - PreviousCheckingTime >= IntervalSeconds)
+            if (Started)
             {
-                PreviousCheckingTime = time;
-
-                if ((Screen.width != CurrentWidth) || (Screen.height != CurrentHeight))
+                var time = Time.realtimeSinceStartup;
+                if (time - PreviousCheckingTime >= IntervalSeconds)
                 {
-                    CurrentHeight = Screen.height;
-                    CurrentWidth = Screen.width;
+                    PreviousCheckingTime = time;
 
-                    foreach (var callback in Callbacks)
-                        callback.Update(CurrentHeight, CurrentWidth);
+                    if ((Screen.width != CurrentWidth) || (Screen.height != CurrentHeight))
+                    {
+                        CurrentHeight = Screen.height;
+                        CurrentWidth = Screen.width;
+
+                        foreach (var callback in Callbacks)
+                            callback.Update(CurrentHeight, CurrentWidth);
+                    }
                 }
             }
         }
