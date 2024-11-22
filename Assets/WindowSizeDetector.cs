@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace oojjrs.oh
 {
@@ -12,8 +11,6 @@ namespace oojjrs.oh
 
         public interface InitializerInterface
         {
-            bool IsRunning { get; }
-
             void Initialize(int width, int height);
         }
 
@@ -40,7 +37,7 @@ namespace oojjrs.oh
             }
         }
 
-        private IEnumerator Start()
+        private void Start()
         {
             if (Callbacks == default)
                 Debug.LogWarning($"{name}> DON'T HAVE CALLBACK FUNCTION.");
@@ -49,33 +46,25 @@ namespace oojjrs.oh
             CurrentWidth = Screen.width;
 
             if (Initializer != default)
-            {
-                if (Initializer.IsRunning == false)
-                    yield return new WaitUntil(() => Initializer.IsRunning);
-
                 Initializer.Initialize(CurrentWidth, CurrentHeight);
-            }
 
             Started = true;
         }
 
         private void Update()
         {
-            if (Started)
+            var time = Time.realtimeSinceStartup;
+            if (time - PreviousCheckingTime >= IntervalSeconds)
             {
-                var time = Time.realtimeSinceStartup;
-                if (time - PreviousCheckingTime >= IntervalSeconds)
+                PreviousCheckingTime = time;
+
+                if ((Screen.width != CurrentWidth) || (Screen.height != CurrentHeight))
                 {
-                    PreviousCheckingTime = time;
+                    CurrentHeight = Screen.height;
+                    CurrentWidth = Screen.width;
 
-                    if ((Screen.width != CurrentWidth) || (Screen.height != CurrentHeight))
-                    {
-                        CurrentHeight = Screen.height;
-                        CurrentWidth = Screen.width;
-
-                        foreach (var callback in Callbacks)
-                            callback.Update(CurrentHeight, CurrentWidth);
-                    }
+                    foreach (var callback in Callbacks)
+                        callback.Update(CurrentHeight, CurrentWidth);
                 }
             }
         }
