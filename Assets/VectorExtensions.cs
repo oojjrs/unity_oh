@@ -24,6 +24,11 @@ namespace Assets
             return new(tuple.x, y, tuple.z);
         }
 
+        public static Vector3 MergeX0Z(this Vector2 v, float y = 0)
+        {
+            return new(v.x, y, v.y);
+        }
+
         public static (float, float) Split(this Vector2 v)
         {
             return (v.x, v.y);
