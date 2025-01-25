@@ -1,8 +1,7 @@
-﻿using oojjrs.oh;
-using System;
+﻿using System;
 using UnityEngine;
 
-namespace Assets
+namespace oojjrs.oh
 {
     public class ChronoWaitUntil : CustomYieldInstruction, ChronoInterface
     {
