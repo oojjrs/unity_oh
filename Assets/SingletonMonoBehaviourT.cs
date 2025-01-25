@@ -2,7 +2,8 @@
 
 namespace oojjrs.oh
 {
-    [RequireComponent(typeof(SolidObject))]
+    // 싱글톤 상위에 Solid가 붙어있을 수 있어 의도적으로 붙이지 않았다.
+    //[RequireComponent(typeof(SolidObject))]
     public class SingletonMonoBehaviourT<T> : MonoBehaviour
         where T : SingletonMonoBehaviourT<T>
     {
