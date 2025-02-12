@@ -1,5 +1,15 @@
 ﻿public static class VectorExtensions
 {
+    public static System.Numerics.Vector2 GetXZ(this System.Numerics.Vector3 v)
+    {
+        return new(v.X, v.Z);
+    }
+
+    public static UnityEngine.Vector2 GetXZ(this UnityEngine.Vector3 v)
+    {
+        return new(v.x, v.z);
+    }
+
     public static System.Numerics.Vector2 ToStandard(this UnityEngine.Vector2 v)
     {
         return new(v.x, v.y);
