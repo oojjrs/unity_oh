@@ -4,6 +4,8 @@ namespace oojjrs.oh
 {
     public class SolidObject : MonoBehaviour
     {
+        public bool IsLogDiscarded { get; set; }
+
         private void Awake()
         {
             DontDestroyOnLoad(gameObject);
@@ -11,7 +13,8 @@ namespace oojjrs.oh
 
         private void Start()
         {
-            Debug.Log($"{name}> I'm solid.");
+            if (IsLogDiscarded == false)
+                Debug.Log($"{name}> I'm solid.");
         }
     }
 }
