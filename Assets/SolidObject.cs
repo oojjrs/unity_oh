@@ -4,7 +4,7 @@ namespace oojjrs.oh
 {
     public class SolidObject : MonoBehaviour
     {
-        public bool IsLogDiscarded { get; set; }
+        public bool IsLogDiscarded;
 
         private void Awake()
         {
