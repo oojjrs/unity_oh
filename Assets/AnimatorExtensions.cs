@@ -3,6 +3,55 @@ using UnityEngine;
 
 public static class AnimatorExtensions
 {
+    public static bool GetBoolSafety(this Animator a, int id)
+    {
+        if (a != default)
+            return a.GetBool(id);
+        else
+            return false;
+    }
+
+    public static bool GetBoolSafety(this Animator a, string name)
+    {
+        if (a != default)
+            return a.GetBool(name);
+        else
+            return false;
+    }
+
+    public static float GetFloatSafety(this Animator a, int id)
+    {
+        if (a != default)
+            return a.GetFloat(id);
+        else
+            return 0;
+    }
+
+    public static float GetFloatSafety(this Animator a, string name)
+    {
+        if (a != default)
+            return a.GetFloat(name);
+        else
+            return 0;
+    }
+
+    public static int GetIntegerSafety(this Animator a, int id)
+    {
+        if (a != default)
+            return a.GetInteger(id);
+        else
+            return 0;
+    }
+
+    public static int GetIntegerSafety(this Animator a, string name)
+    {
+        if (a != default)
+            return a.GetInteger(name);
+        else
+            return 0;
+    }
+
+
     public static float GetSpeedSafety(this Animator a)
     {
         if (a != default)
