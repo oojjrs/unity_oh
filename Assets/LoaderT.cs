@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 
 public class LoaderT<T> : MonoBehaviour
-    where T : Object
 {
     [SerializeField]
     private T[] _values = new T[1];
