@@ -2,11 +2,6 @@
 
 public static class GameObjectExtensions
 {
-    public static GameObject CreateNew<T>() where T : MonoBehaviour
-    {
-        return new GameObject(typeof(T).Name, typeof(T));
-    }
-
     // 객체 파괴를 좀 더 신중하게 관리하기 위해 추가했다.
     public static void Destroy(this Object o)
     {
