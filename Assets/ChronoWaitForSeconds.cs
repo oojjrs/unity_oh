@@ -67,5 +67,10 @@ namespace oojjrs.oh
             Latest = Time.time;
             Pause = false;
         }
+
+        void ChronoInterface.SetSpeed(float speed)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

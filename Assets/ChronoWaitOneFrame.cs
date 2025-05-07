@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace oojjrs.oh
 {
@@ -64,6 +65,11 @@ namespace oojjrs.oh
                 Debug.LogWarning($"{DebuggingName}> 재개");
 #endif
             Pause = false;
+        }
+
+        void ChronoInterface.SetSpeed(float speed)
+        {
+            throw new NotImplementedException();
         }
     }
 }

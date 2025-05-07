@@ -5,6 +5,8 @@ namespace oojjrs.oh
 {
     public class ChronoEffect : MonoBehaviour, ChronoInterface
     {
+        private Dictionary<Animator, float> OriginalAnimatorSpeeds { get; } = new();
+        private Dictionary<ParticleSystem, float> OriginalParticleSystemSpeeds { get; } = new();
         private Dictionary<Animator, float> Speeds { get; } = new();
 
         private void OnDisable()
@@ -45,6 +47,33 @@ namespace oojjrs.oh
             {
                 if (Speeds.TryGetValue(animator, out var speed))
                     animator.speed = speed;
+            }
+        }
+
+        void ChronoInterface.SetSpeed(float speed)
+        {
+            foreach (var ps in GetComponentsInChildren<ParticleSystem>())
+            {
+                var main = ps.main;
+
+                if (OriginalParticleSystemSpeeds.TryGetValue(ps, out var psSpeed) == false)
+                {
+                    psSpeed = main.simulationSpeed;
+                    OriginalParticleSystemSpeeds[ps] = psSpeed;
+                }
+
+                main.simulationSpeed = psSpeed * speed;
+            }
+
+            foreach (var animator in GetComponentsInChildren<Animator>())
+            {
+                if (OriginalAnimatorSpeeds.TryGetValue(animator, out var animSpeed) == false)
+                {
+                    animSpeed = animator.speed;
+                    OriginalAnimatorSpeeds[animator] = animSpeed;
+                }
+
+                animator.speed = animSpeed * speed;
             }
         }
     }

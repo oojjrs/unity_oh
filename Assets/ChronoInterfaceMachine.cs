@@ -46,5 +46,14 @@ namespace oojjrs.oh
             foreach (var value in Instance.Values)
                 value.Resume();
         }
+
+        public static void SetSpeed(float speed)
+        {
+            if (Instance == default)
+                return;
+
+            foreach (var value in Instance.Values)
+                value.SetSpeed(speed);
+        }
     }
 }

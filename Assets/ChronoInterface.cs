@@ -4,5 +4,6 @@
     {
         void Pause();
         void Resume();
+        void SetSpeed(float speed);
     }
 }
