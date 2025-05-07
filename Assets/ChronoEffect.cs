@@ -17,6 +17,12 @@ namespace oojjrs.oh
             ChronoInterfaceMachine.Add(this);
         }
 
+        private void Start()
+        {
+            if (ChronoInterfaceMachine.Pausing)
+                ((ChronoInterface)this).Pause();
+        }
+
         void ChronoInterface.Pause()
         {
             foreach (var ps in GetComponentsInChildren<ParticleSystem>())
