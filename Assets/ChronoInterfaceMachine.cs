@@ -4,8 +4,10 @@ namespace oojjrs.oh
 {
     public class ChronoInterfaceMachine : SingletonMonoBehaviourT<ChronoInterfaceMachine>
     {
+        public static float CurrentSpeed => (Instance != default) ? Instance.Speed : 1;
         public static bool Pausing => (Instance != default) && Instance.State;
 
+        private float Speed { get; set; } = 1;
         private bool State { get; set; }
         private HashSet<ChronoInterface> Values { get; } = new();
 
@@ -51,6 +53,8 @@ namespace oojjrs.oh
         {
             if (Instance == default)
                 return;
+
+            Instance.Speed = speed;
 
             foreach (var value in Instance.Values)
                 value.SetSpeed(speed);

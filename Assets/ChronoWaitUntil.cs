@@ -55,7 +55,6 @@ namespace oojjrs.oh
 
         void ChronoInterface.SetSpeed(float speed)
         {
-            throw new NotImplementedException();
         }
     }
 }

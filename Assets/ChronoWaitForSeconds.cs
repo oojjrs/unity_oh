@@ -13,7 +13,7 @@ namespace oojjrs.oh
                     return true;
 
                 var time = Time.time;
-                Elapsed += time - Latest;
+                Elapsed += (time - Latest) * Speed;
                 Latest = time;
 
                 if (Elapsed < Seconds)
@@ -38,6 +38,7 @@ namespace oojjrs.oh
         private float Elapsed { get; set; }
         private float Latest { get; set; }
         private bool Pause { get; set; }
+        private float Speed { get; set; } = 1;
         private float Seconds { get; }
 
         public ChronoWaitForSeconds(float seconds)
@@ -53,6 +54,7 @@ namespace oojjrs.oh
             Elapsed = 0;
             Latest = Time.time;
             Pause = ChronoInterfaceMachine.Pausing;
+            Speed = ChronoInterfaceMachine.CurrentSpeed;
 
             ChronoInterfaceMachine.Add(this);
         }
@@ -70,7 +72,7 @@ namespace oojjrs.oh
 
         void ChronoInterface.SetSpeed(float speed)
         {
-            throw new NotImplementedException();
+            Speed = speed;
         }
     }
 }
