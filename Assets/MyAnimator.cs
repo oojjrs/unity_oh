@@ -42,16 +42,18 @@ public class MyAnimator : MonoBehaviour
             // SetInteger가 반영될 시간이 필요함
             yield return default;
 
-            // GetCurrentAnimatorStateInfo에서 값이 꼬이지 않도록 초기화 타이밍을 보장함
+            // AnimatorStateInfo에서 값이 꼬이지 않도록 초기화 타이밍을 보장함
             yield return new WaitForEndOfFrame();
 
             var targetLayer = 0;
-            var startStateHash = _animatorCached.GetCurrentAnimatorStateInfo(targetLayer).fullPathHash;
+            var startState = _animatorCached.IsInTransition(targetLayer) ? _animatorCached.GetNextAnimatorStateInfo(targetLayer) : _animatorCached.GetCurrentAnimatorStateInfo(targetLayer);
+            if (startState.loop)
+                Debug.LogWarning($"{name}> 루프 애니메이션 경고 ({value})");
 
             while (_animatorCached.GetInteger(ActionHash) == value)
             {
-                var state = _animatorCached.GetCurrentAnimatorStateInfo(targetLayer);
-                if (state.fullPathHash != startStateHash)
+                var state = _animatorCached.IsInTransition(targetLayer) ? _animatorCached.GetNextAnimatorStateInfo(targetLayer) : _animatorCached.GetCurrentAnimatorStateInfo(targetLayer);
+                if (state.fullPathHash != startState.fullPathHash)
                 {
                     if (_isDebugging)
                         Debug.Log($"{name}> 알 수 없는 이유로 액션 중단 ({value})");
