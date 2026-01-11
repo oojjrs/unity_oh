@@ -84,4 +84,18 @@ public class MyAnimator : MonoBehaviour
             _actionCoroutine = default;
         }
     }
+
+    public void aaStopActionOnce()
+    {
+        if (_actionCoroutine != default)
+        {
+            if (_isDebugging)
+                Debug.Log($"{name}> 요청에 의한 액션 중단 ({_currentActionValue})");
+
+            StopCoroutine(_actionCoroutine);
+            _actionCoroutine = default;
+
+            _animatorCached.SetInteger(ActionHash, ActionZeroValue);
+        }
+    }
 }
