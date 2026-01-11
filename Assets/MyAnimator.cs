@@ -18,7 +18,7 @@ public class MyAnimator : MonoBehaviour
         _animatorCached = GetComponent<Animator>();
     }
 
-    public void PlayActionOnce(int value)
+    public void aaPlayActionOnce(int value)
     {
         _animatorCached.SetInteger(ActionHash, value);
 
