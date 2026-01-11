@@ -24,6 +24,12 @@ public class MyAnimator : MonoBehaviour
 
         if (_actionCoroutine != default)
         {
+            if (value == _currentActionValue)
+            {
+                Debug.LogWarning($"{name}> 중복 호출 경고 ({value})");
+                return;
+            }
+
             StopCoroutine(_actionCoroutine);
 
             if (_isDebugging)
