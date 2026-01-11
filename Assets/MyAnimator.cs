@@ -13,9 +13,18 @@ public class MyAnimator : MonoBehaviour
     [SerializeField]
     private bool _isDebugging = false;
 
+    public Animator Animator => _animatorCached;
+
     private void Awake()
     {
         _animatorCached = GetComponent<Animator>();
+    }
+
+    public void aaPlayAction(int value)
+    {
+        aaStopActionOnce();
+
+        _animatorCached.SetInteger(ActionHash, value);
     }
 
     public void aaPlayActionOnce(int value)

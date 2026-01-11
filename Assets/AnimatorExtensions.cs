@@ -72,16 +72,34 @@ public static class AnimatorExtensions
             a.gameObject.SetActive(value);
     }
 
+    public static void SetBoolSafety(this Animator a, int id, bool value)
+    {
+        if (a != default)
+            a.SetBool(id, value);
+    }
+
     public static void SetBoolSafety(this Animator a, string name, bool value)
     {
         if (a != default)
             a.SetBool(name, value);
     }
 
+    public static void SetFloatSafety(this Animator a, int id, float value)
+    {
+        if (a != default)
+            a.SetFloat(id, value);
+    }
+
     public static void SetFloatSafety(this Animator a, string name, float value)
     {
         if (a != default)
             a.SetFloat(name, value);
+    }
+
+    public static void SetIntegerSafety(this Animator a, int id, int value)
+    {
+        if (a != default)
+            a.SetInteger(id, value);
     }
 
     public static void SetIntegerSafety(this Animator a, string name, int value)
@@ -94,6 +112,12 @@ public static class AnimatorExtensions
     {
         if (a != default)
             a.speed = speed;
+    }
+
+    public static void SetTriggerSafety(this Animator a, int id)
+    {
+        if (a != default)
+            a.SetTrigger(id);
     }
 
     public static void SetTriggerSafety(this Animator a, string name)
