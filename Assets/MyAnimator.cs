@@ -6,6 +6,7 @@ public class MyAnimator : MonoBehaviour
 {
     private static readonly int ActionHash = Animator.StringToHash("Action");
     private const int ActionZeroValue = 0;
+    private const int TargetLayer = 0;
 
     private Coroutine _actionCoroutine;
     private Animator _animatorCached;
@@ -29,22 +30,30 @@ public class MyAnimator : MonoBehaviour
 
     public void aaPlayActionOnce(int value)
     {
-        _animatorCached.SetInteger(ActionHash, value);
+        if (_animatorCached.GetInteger(ActionHash) == ActionZeroValue)
+        {
+            if (_animatorCached.IsInTransition(TargetLayer))
+            {
+                Debug.LogWarning($"{name}> 기본 동작 복귀 중에는 새로운 액션 재생을 시작할 수 없습니다: VALUE({value})");
+                return;
+            }
+        }
 
         if (_actionCoroutine != default)
         {
             if (value == _currentActionValue)
             {
-                Debug.LogWarning($"{name}> 중복 호출 경고 ({value})");
+                Debug.LogWarning($"{name}> 중복 호출 경고: VALUE({value})");
                 return;
             }
 
             StopCoroutine(_actionCoroutine);
 
             if (_isDebugging)
-                Debug.Log($"{name}> 기존 액션 중단 ({_currentActionValue})");
+                Debug.Log($"{name}> 기존 액션 중단: VALUE({_currentActionValue})");
         }
 
+        _animatorCached.SetInteger(ActionHash, value);
         _actionCoroutine = StartCoroutine(WaitForEnd());
 
         IEnumerator WaitForEnd()
@@ -52,7 +61,7 @@ public class MyAnimator : MonoBehaviour
             _currentActionValue = value;
 
             if (_isDebugging)
-                Debug.Log($"{name}> 새 액션 재생 ({value})");
+                Debug.Log($"{name}> 새 액션 재생: VALUE({value})");
 
             // SetInteger가 반영될 시간이 필요함
             yield return default;
@@ -60,18 +69,17 @@ public class MyAnimator : MonoBehaviour
             // AnimatorStateInfo에서 값이 꼬이지 않도록 초기화 타이밍을 보장함
             yield return new WaitForEndOfFrame();
 
-            var targetLayer = 0;
-            var startState = _animatorCached.IsInTransition(targetLayer) ? _animatorCached.GetNextAnimatorStateInfo(targetLayer) : _animatorCached.GetCurrentAnimatorStateInfo(targetLayer);
+            var startState = _animatorCached.IsInTransition(TargetLayer) ? _animatorCached.GetNextAnimatorStateInfo(TargetLayer) : _animatorCached.GetCurrentAnimatorStateInfo(TargetLayer);
             if (startState.loop)
-                Debug.LogWarning($"{name}> 루프 애니메이션 경고 ({value})");
+                Debug.LogWarning($"{name}> 루프 애니메이션 경고: VALUE({value})");
 
             while (_animatorCached.GetInteger(ActionHash) == value)
             {
-                var state = _animatorCached.IsInTransition(targetLayer) ? _animatorCached.GetNextAnimatorStateInfo(targetLayer) : _animatorCached.GetCurrentAnimatorStateInfo(targetLayer);
+                var state = _animatorCached.IsInTransition(TargetLayer) ? _animatorCached.GetNextAnimatorStateInfo(TargetLayer) : _animatorCached.GetCurrentAnimatorStateInfo(TargetLayer);
                 if (state.fullPathHash != startState.fullPathHash)
                 {
                     if (_isDebugging)
-                        Debug.Log($"{name}> 알 수 없는 이유로 액션 중단 ({value})");
+                        Debug.Log($"{name}> 알 수 없는 이유로 액션 중단: VALUE({value})");
 
                     break;
                 }
@@ -79,7 +87,7 @@ public class MyAnimator : MonoBehaviour
                 if (state.normalizedTime >= 1f)
                 {
                     if (_isDebugging)
-                        Debug.Log($"{name}> 액션 종료 ({value})");
+                        Debug.Log($"{name}> 액션 종료: VALUE({value})");
 
                     break;
                 }
