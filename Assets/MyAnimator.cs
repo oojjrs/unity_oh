@@ -4,11 +4,18 @@ using UnityEngine;
 [RequireComponent(typeof(Animator))]
 public class MyAnimator : MonoBehaviour
 {
+    // 아직은 복귀 액션에 대한 판정은 하지 않음
+    public interface ActionEndInterface
+    {
+        void OnActionEnd(int action);
+    }
+
     private static readonly int ActionHash = Animator.StringToHash("Action");
     private const int ActionZeroValue = 0;
     private const int TargetLayer = 0;
 
     private Coroutine _actionCoroutine;
+    private ActionEndInterface[] _actionEnds;
     private Animator _animatorCached;
     private int _currentActionValue;
     [SerializeField]
@@ -18,6 +25,7 @@ public class MyAnimator : MonoBehaviour
 
     private void Awake()
     {
+        _actionEnds = GetComponents<ActionEndInterface>();
         _animatorCached = GetComponent<Animator>();
     }
 
@@ -88,6 +96,12 @@ public class MyAnimator : MonoBehaviour
                 {
                     if (_isDebugging)
                         Debug.Log($"{name}> 액션 종료: VALUE({value})");
+
+                    if (_actionEnds?.Length > 0)
+                    {
+                        foreach (var actionEnd in _actionEnds)
+                            actionEnd.OnActionEnd(_currentActionValue);
+                    }
 
                     break;
                 }
