@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace oojjrs.oh
 {
-    public abstract partial class Updater : MonoBehaviour
+    public abstract partial class MyUpdater : MonoBehaviour
     {
         private float OneFrameSeconds => 0.0167f;
         protected abstract bool IsApplicationContinue { get; }

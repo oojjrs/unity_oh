@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace oojjrs.oh
 {
-    public abstract partial class Updater
+    public abstract partial class MyUpdater
     {
         private Dictionary<string, Coroutine> NamedCoroutines { get; } = new();
 

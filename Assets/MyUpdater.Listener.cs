@@ -1,6 +1,6 @@
 ﻿namespace oojjrs.oh
 {
-    public abstract partial class Updater
+    public abstract partial class MyUpdater
     {
         public abstract class ListenerInterface
         {

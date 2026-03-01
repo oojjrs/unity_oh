@@ -1,6 +1,6 @@
 ﻿namespace oojjrs.oh
 {
-    public abstract class UpdaterT<T> : Updater where T : Updater.ListenerInterface, new()
+    public abstract class MyUpdaterT<T> : MyUpdater where T : MyUpdater.ListenerInterface, new()
     {
         protected override ListenerInterface _Listener => Listener;
 
