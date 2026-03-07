@@ -8,7 +8,7 @@ namespace oojjrs.oh
         private float OneFrameSeconds => 0.0167f;
         protected abstract bool IsApplicationContinue { get; }
         protected bool IsApplicationQuitting { get; private set; }
-        private bool IsReady => IsStarted && IsStartCalled;
+        private bool IsReady => IsApplicationContinue && (IsApplicationQuitting == false) && IsStarted && IsStartCalled;
         private bool IsStartCalled { get; set; }
         private bool IsStarted { get; set; }
         protected abstract ListenerInterface _Listener { get; }
