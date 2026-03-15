@@ -26,7 +26,7 @@ public static class AudioMixerExtensions
         }
         else
         {
-            Debug.LogWarning($"SetFloatSafety IS FAILED: THE AUDIOMIXER IS NULL");
+            Debug.LogWarning($"SetFloatSafety({name}, {value}) IS FAILED: THE AUDIOMIXER IS NULL");
         }
     }
 
@@ -49,5 +49,10 @@ public static class AudioMixerExtensions
     public static void SetSoundVolumeSafety(this AudioMixer audioMixer, float value)
     {
         audioMixer.SetFloatSafety("SoundVolume", value);
+    }
+
+    public static void SetUiVolumeSafety(this AudioMixer audioMixer, float value)
+    {
+        audioMixer.SetFloatSafety("UiVolume", value);
     }
 }
