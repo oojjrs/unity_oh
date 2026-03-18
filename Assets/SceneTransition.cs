@@ -11,13 +11,20 @@ namespace oojjrs.oh
         {
             string SceneName { get; }
 
-            void OnLoadBegin();
-            void OnLoadEnd();
+            IEnumerator OnLoadBeginAsync();
+            IEnumerator OnLoadEndAsync();
         }
 
-        public IEnumerator LoadAsync(RequestInterface request)
+        private IEnumerator Start()
         {
-            request.OnLoadBegin();
+            var request = GetComponent<RequestInterface>();
+            if (request == default)
+            {
+                Debug.LogWarning($"{name}> HAS NO Request Interface.");
+                yield break;
+            }
+
+            yield return request.OnLoadBeginAsync();
 
             if (SceneManager.GetActiveScene().name != request.SceneName)
             {
@@ -29,7 +36,7 @@ namespace oojjrs.oh
                 Debug.Log($"LOAD END : {Time.time - time} seconds");
             }
 
-            request.OnLoadEnd();
+            yield return request.OnLoadEndAsync();
         }
     }
 }
