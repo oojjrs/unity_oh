@@ -11,13 +11,13 @@ namespace oojjrs.oh
         {
             string SceneName { get; }
 
-            void OnPostload();
-            void OnPreload();
+            void OnLoadBegin();
+            void OnLoadEnd();
         }
 
         public IEnumerator LoadAsync(RequestInterface request)
         {
-            request.OnPreload();
+            request.OnLoadBegin();
 
             if (SceneManager.GetActiveScene().name != request.SceneName)
             {
@@ -29,7 +29,7 @@ namespace oojjrs.oh
                 Debug.Log($"LOAD END : {Time.time - time} seconds");
             }
 
-            request.OnPostload();
+            request.OnLoadEnd();
         }
     }
 }
