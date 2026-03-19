@@ -26,14 +26,21 @@ namespace oojjrs.oh
 
             yield return request.OnLoadBeginAsync();
 
-            if (SceneManager.GetActiveScene().name != request.SceneName)
+            if (string.IsNullOrWhiteSpace(request.SceneName))
             {
-                var time = Time.time;
-                Debug.Log("LOAD BEGIN : " + request.SceneName);
+                Debug.Log($"{name}> SCENE LOADING IS PASSED.");
+            }
+            else
+            {
+                if (SceneManager.GetActiveScene().name != request.SceneName)
                 {
-                    yield return SceneManager.LoadSceneAsync(request.SceneName);
+                    var time = Time.time;
+                    Debug.Log($"{name}> LOAD BEGIN : {request.SceneName}");
+                    {
+                        yield return SceneManager.LoadSceneAsync(request.SceneName);
+                    }
+                    Debug.Log($"LOAD END : {Time.time - time} seconds");
                 }
-                Debug.Log($"LOAD END : {Time.time - time} seconds");
             }
 
             yield return request.OnLoadEndAsync();
