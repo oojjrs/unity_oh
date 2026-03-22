@@ -15,8 +15,8 @@ namespace oojjrs.oh
 
             IEnumerator Func(Action action, float time)
             {
-                if (IsReady == false)
-                    yield return new WaitUntil(() => IsReady);
+                if (IsRunning == false)
+                    yield return new WaitUntil(() => IsRunning);
 
                 if (time > 0)
                     yield return new ChronoWaitForSeconds(time);
@@ -34,8 +34,8 @@ namespace oojjrs.oh
 
             IEnumerator Func(Action action, float time)
             {
-                if (IsReady == false)
-                    yield return new WaitUntil(() => IsReady);
+                if (IsRunning == false)
+                    yield return new WaitUntil(() => IsRunning);
 
                 if (time > 0)
                     yield return new ChronoWaitForSeconds(time);
@@ -78,8 +78,8 @@ namespace oojjrs.oh
 
             IEnumerator Func(string invokerName, Action action)
             {
-                if (IsReady == false)
-                    yield return new WaitUntil(() => IsReady);
+                if (IsRunning == false)
+                    yield return new WaitUntil(() => IsRunning);
 
                 yield return default;
 
@@ -108,8 +108,8 @@ namespace oojjrs.oh
 
             IEnumerator Func(string invokerName, Action action, float time)
             {
-                if (IsReady == false)
-                    yield return new WaitUntil(() => IsReady);
+                if (IsRunning == false)
+                    yield return new WaitUntil(() => IsRunning);
 
                 if (time > 0)
                     yield return new ChronoWaitForSeconds(time);
@@ -126,8 +126,8 @@ namespace oojjrs.oh
 
             IEnumerator Func(Action action, Func<bool> predict)
             {
-                if (IsReady == false)
-                    yield return new WaitUntil(() => IsReady);
+                if (IsRunning == false)
+                    yield return new WaitUntil(() => IsRunning);
 
                 if (predict != default)
                     yield return new WaitUntil(predict);
@@ -157,8 +157,8 @@ namespace oojjrs.oh
 
         private IEnumerator GeneralCallCoroutine(Func<bool> isKeepGoingFunc, Action action, Func<float> getSecondsFunc, Action onFinal)
         {
-            if (IsReady == false)
-                yield return new WaitUntil(() => IsReady || (isKeepGoingFunc() == false));
+            if (IsRunning == false)
+                yield return new WaitUntil(() => IsRunning || (isKeepGoingFunc() == false));
 
             while (isKeepGoingFunc())
             {

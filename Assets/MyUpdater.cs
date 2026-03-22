@@ -8,7 +8,7 @@ namespace oojjrs.oh
         private float OneFrameSeconds => 0.0167f;
         protected abstract bool IsApplicationContinue { get; }
         protected bool IsApplicationQuitting { get; private set; }
-        private bool IsReady => IsApplicationContinue && (IsApplicationQuitting == false) && IsStarted && IsStartCalled;
+        private bool IsRunning => IsApplicationContinue && (IsApplicationQuitting == false) && IsStartCalled;
         private bool IsStartCalled { get; set; }
         private bool IsStarted { get; set; }
         protected abstract ListenerInterface _Listener { get; }
@@ -41,7 +41,7 @@ namespace oojjrs.oh
             IEnumerator DelayedUpdate()
             {
                 // Start-Update일 때와 OnEnable일 때 1프레임 처리가 다른 것을 방지하기 위해 OnEnable도 1프레임을 강제로 미뤄주었다.
-                yield return new WaitUntil(() => IsReady);
+                yield return new WaitUntil(() => IsStarted);
 
                 OnEnabled();
 
@@ -65,7 +65,7 @@ namespace oojjrs.oh
 
         private void Update()
         {
-            if (IsReady)
+            if (IsRunning)
             {
                 if (_Listener.Flag)
                 {
