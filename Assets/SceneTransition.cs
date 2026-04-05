@@ -20,30 +20,35 @@ namespace oojjrs.oh
             var request = GetComponent<RequestInterface>();
             if (request == default)
             {
-                Debug.LogWarning($"{name}> HAS NO Request Interface.");
+                Debug.LogWarning($"{name}> MISSING {nameof(RequestInterface)}.");
                 yield break;
             }
+
+            Debug.Log($"{name}> BEGIN.");
 
             yield return request.OnLoadBeginAsync();
 
             if (string.IsNullOrWhiteSpace(request.SceneName))
             {
-                Debug.Log($"{name}> SCENE LOADING IS PASSED.");
+                Debug.Log($"{name}> LOAD SKIPPED: NO SCENE NAME.");
+            }
+            else if (SceneManager.GetActiveScene().name == request.SceneName)
+            {
+                Debug.Log($"{name}> LOAD IGNORED: SCENE ALREADY LOADED.");
             }
             else
             {
-                if (SceneManager.GetActiveScene().name != request.SceneName)
+                var time = Time.time;
+                Debug.Log($"{name}> LOAD BEGIN: {request.SceneName}");
                 {
-                    var time = Time.time;
-                    Debug.Log($"{name}> LOAD BEGIN : {request.SceneName}");
-                    {
-                        yield return SceneManager.LoadSceneAsync(request.SceneName);
-                    }
-                    Debug.Log($"LOAD END : {Time.time - time} seconds");
+                    yield return SceneManager.LoadSceneAsync(request.SceneName);
                 }
+                Debug.Log($"{name}> LOAD END: {Time.time - time} sec");
             }
 
             yield return request.OnLoadEndAsync();
+
+            Debug.Log($"{name}> END.");
         }
     }
 }
