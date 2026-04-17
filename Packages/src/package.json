@@ -1,12 +1,12 @@
 {
   "name": "com.oojjrs.oh",
   "displayName": "OOJJRS' Unity GameObject Helper",
-  "version": "1.18.2",
+  "version": "1.19.0",
   "unity": "6000.3",
-  "description": "",
+  "description": "Helper extensions and utility components for Unity GameObject workflows.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/oojjrs/unity_oh.git?path=/Assets"
+    "url": "git+https://github.com/oojjrs/unity_oh.git?path=/Packages/src"
   },
   "author": {
     "name": "oojjrs",
