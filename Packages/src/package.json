@@ -1,7 +1,7 @@
 {
   "name": "com.oojjrs.oh",
   "displayName": "OOJJRS' Unity GameObject Helper",
-  "version": "1.19.1",
+  "version": "1.20.0",
   "unity": "6000.3",
   "description": "Helper extensions and utility components for Unity GameObject workflows.",
   "repository": {
