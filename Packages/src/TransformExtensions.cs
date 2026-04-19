@@ -11,9 +11,21 @@ public static class TransformExtensions
         }
     }
 
+    public static void LocalRotationSafety(this Transform transform, Quaternion rotation)
+    {
+        if (transform != default)
+            transform.localRotation = rotation;
+    }
+
     public static void PositionSafety(this Transform transform, Vector3 position)
     {
         if (transform != default)
             transform.position = position;
+    }
+
+    public static void RotationSafety(this Transform transform, Quaternion rotation)
+    {
+        if (transform != default)
+            transform.rotation = rotation;
     }
 }
