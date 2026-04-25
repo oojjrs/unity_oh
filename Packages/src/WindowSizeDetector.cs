@@ -18,7 +18,6 @@ namespace oojjrs.oh
         private int CurrentHeight { get; set; }
         private int CurrentWidth { get; set; }
         private InitializerInterface Initializer { get; set; }
-        private Object InitializerObject => Initializer as Object;
         public float IntervalSeconds { get; set; } = 0.5f;
         private float PreviousCheckingTime { get; set; }
         private bool Started { get; set; }
@@ -33,7 +32,7 @@ namespace oojjrs.oh
         {
             if (Started)
             {
-                if (InitializerObject != null)
+                if ((Initializer as UnityEngine.Object) != null)
                     Initializer.Initialize(Screen.width, Screen.height);
             }
         }
@@ -46,7 +45,7 @@ namespace oojjrs.oh
             CurrentHeight = Screen.height;
             CurrentWidth = Screen.width;
 
-            if (InitializerObject != null)
+            if ((Initializer as UnityEngine.Object) != null)
                 Initializer.Initialize(CurrentWidth, CurrentHeight);
 
             Started = true;

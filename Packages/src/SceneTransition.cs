@@ -18,7 +18,8 @@ namespace oojjrs.oh
         private IEnumerator Start()
         {
             var request = GetComponent<RequestInterface>();
-            if ((request as Object) == null)
+            var requestObject = request as UnityEngine.Object;
+            if (requestObject == null)
             {
                 Debug.LogWarning($"{name}> MISSING {nameof(RequestInterface)}.");
                 yield break;
