@@ -42,7 +42,7 @@ namespace oojjrs.oh
         private float Seconds { get; }
 
         public ChronoWaitForSeconds(float seconds)
-            : this(seconds, default)
+            : this(seconds, null)
         {
         }
 

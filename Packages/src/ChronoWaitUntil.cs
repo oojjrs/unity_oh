@@ -29,7 +29,7 @@ namespace oojjrs.oh
         private Func<bool> Predict { get; }
 
         public ChronoWaitUntil(Func<bool> predict)
-            : this(predict, default)
+            : this(predict, null)
         {
         }
 

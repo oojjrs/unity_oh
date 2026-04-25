@@ -17,7 +17,7 @@ namespace oojjrs.oh
         private void OnDestroy()
         {
             if (__instance == this)
-                __instance = default;
+                __instance = null;
         }
 
         private IEnumerator Start()
@@ -31,7 +31,7 @@ namespace oojjrs.oh
                 {
                     s.volume = Mathf.Lerp(v, 0, Mathf.Clamp01((Time.time - time) / _fadeoutTimeSeconds));
 
-                    yield return default;
+                    yield return null;
                 }
 
                 __instance.DestroyObject();

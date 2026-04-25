@@ -27,7 +27,7 @@ namespace oojjrs.oh
         {
             if (Instance == this)
             {
-                Instance = default;
+                Instance = null;
 
                 Debug.Log($"{name}> Singleton OnDestroy");
             }

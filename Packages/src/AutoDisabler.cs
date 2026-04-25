@@ -15,7 +15,7 @@ public class AutoDisabler : MonoBehaviour
             if (_seconds > 0)
                 yield return new WaitForSeconds(_seconds);
             else
-                yield return default;
+                yield return null;
 
             gameObject.SetActiveSafety(false);
         }

@@ -46,17 +46,17 @@ namespace oojjrs.oh
             }
         }
 
-        protected void CallRepeatedly(Action action, float seconds, Func<bool> isKeepGoingFunc, Action onFinal = default)
+        protected void CallRepeatedly(Action action, float seconds, Func<bool> isKeepGoingFunc, Action onFinal = null)
         {
             _ = StartCoroutine(GeneralCallCoroutine(isKeepGoingFunc, action, () => seconds, onFinal));
         }
 
-        protected void CallNamedRepeatedly(Action action, float seconds, Func<bool> isKeepGoingFunc, Action onFinal = default)
+        protected void CallNamedRepeatedly(Action action, float seconds, Func<bool> isKeepGoingFunc, Action onFinal = null)
         {
             CallNamedRepeatedly(GetType().Name, action, seconds, isKeepGoingFunc, onFinal);
         }
 
-        protected void CallNamedRepeatedly(string invokerName, Action action, float seconds, Func<bool> isKeepGoingFunc, Action onFinal = default)
+        protected void CallNamedRepeatedly(string invokerName, Action action, float seconds, Func<bool> isKeepGoingFunc, Action onFinal = null)
         {
             if (NamedCoroutines.ContainsKey(invokerName))
                 return;
@@ -81,7 +81,7 @@ namespace oojjrs.oh
                 if (IsRunning == false)
                     yield return new WaitUntil(() => IsRunning);
 
-                yield return default;
+                yield return null;
 
                 action?.Invoke();
 
@@ -171,7 +171,7 @@ namespace oojjrs.oh
                 if (sec > OneFrameSeconds)
                     yield return new ChronoWaitForSeconds(sec, () => isKeepGoingFunc() == false);
                 else
-                    yield return default;
+                    yield return null;
             }
 
             onFinal?.Invoke();

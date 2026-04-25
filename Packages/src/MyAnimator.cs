@@ -72,7 +72,7 @@ public class MyAnimator : MonoBehaviour
                 Debug.Log($"{name}> 새 액션 재생: VALUE({value})");
 
             // SetInteger가 반영될 시간이 필요함
-            yield return default;
+            yield return null;
 
             // AnimatorStateInfo에서 값이 꼬이지 않도록 초기화 타이밍을 보장함
             yield return new WaitForEndOfFrame();
@@ -106,13 +106,13 @@ public class MyAnimator : MonoBehaviour
                     break;
                 }
 
-                yield return default;
+                yield return null;
             }
 
             if (_animatorCached.GetInteger(ActionHash) == value)
                 _animatorCached.SetInteger(ActionHash, ActionZeroValue);
 
-            _actionCoroutine = default;
+            _actionCoroutine = null;
         }
     }
 
@@ -124,7 +124,7 @@ public class MyAnimator : MonoBehaviour
                 Debug.Log($"{name}> 요청에 의한 액션 중단 ({_currentActionValue})");
 
             StopCoroutine(_actionCoroutine);
-            _actionCoroutine = default;
+            _actionCoroutine = null;
 
             _animatorCached.SetInteger(ActionHash, ActionZeroValue);
         }
