@@ -18,6 +18,7 @@ namespace oojjrs.oh
         private int CurrentHeight { get; set; }
         private int CurrentWidth { get; set; }
         private InitializerInterface Initializer { get; set; }
+        private Object InitializerObject => Initializer as Object;
         public float IntervalSeconds { get; set; } = 0.5f;
         private float PreviousCheckingTime { get; set; }
         private bool Started { get; set; }
@@ -32,20 +33,20 @@ namespace oojjrs.oh
         {
             if (Started)
             {
-                if (Initializer is not null)
+                if (InitializerObject != null)
                     Initializer.Initialize(Screen.width, Screen.height);
             }
         }
 
         private void Start()
         {
-            if (Callbacks is null)
+            if (Callbacks.Length == 0)
                 Debug.LogWarning($"{name}> DON'T HAVE CALLBACK FUNCTION.");
 
             CurrentHeight = Screen.height;
             CurrentWidth = Screen.width;
 
-            if (Initializer is not null)
+            if (InitializerObject != null)
                 Initializer.Initialize(CurrentWidth, CurrentHeight);
 
             Started = true;

@@ -18,7 +18,7 @@ namespace oojjrs.oh
         private IEnumerator Start()
         {
             var request = GetComponent<RequestInterface>();
-            if (request is null)
+            if ((request as Object) == null)
             {
                 Debug.LogWarning($"{name}> MISSING {nameof(RequestInterface)}.");
                 yield break;
