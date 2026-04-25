@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Animator))]
@@ -47,7 +47,7 @@ public class MyAnimator : MonoBehaviour
             }
         }
 
-        if (_actionCoroutine != default)
+        if (_actionCoroutine != null)
         {
             if (value == _currentActionValue)
             {
@@ -118,7 +118,7 @@ public class MyAnimator : MonoBehaviour
 
     public void aaStopActionOnce()
     {
-        if (_actionCoroutine != default)
+        if (_actionCoroutine != null)
         {
             if (_isDebugging)
                 Debug.Log($"{name}> 요청에 의한 액션 중단 ({_currentActionValue})");

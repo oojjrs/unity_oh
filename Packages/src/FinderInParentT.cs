@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public abstract class FinderInParentT<T> : MonoBehaviour
 {
@@ -6,14 +6,14 @@ public abstract class FinderInParentT<T> : MonoBehaviour
     {
         get
         {
-            if (ComponentCached == default)
+            if (ComponentCached == null)
             {
                 var c = GetComponentInParent<FinderT<T>>();
-                if (c != default)
+                if (c != null)
                 {
                     if (c.gameObject == gameObject)
                     {
-                        if (transform.parent != default)
+                        if (transform.parent != null)
                             c = transform.parent.GetComponentInParent<FinderT<T>>();
                         else
                             c = default;
@@ -27,5 +27,5 @@ public abstract class FinderInParentT<T> : MonoBehaviour
         }
     }
     private FinderT<T> ComponentCached { get; set; }
-    public T Value => (Component != default) ? Component.Value : default;
+    public T Value => (Component != null) ? Component.Value : default;
 }

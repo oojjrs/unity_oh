@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -17,7 +17,7 @@ public static class AudioMixerExtensions
 
     public static void SetFloatSafety(this AudioMixer audioMixer, string name, float value)
     {
-        if (audioMixer != default)
+        if (audioMixer != null)
         {
             if (value > 0)
                 audioMixer.SetFloat(name, Mathf.Clamp01(value) * 40 - 40);

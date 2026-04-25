@@ -21,9 +21,9 @@ namespace oojjrs.oh
 
         public void Bind(IdType id, EntityType entity, ModelType model)
         {
-            if (model == default)
+            if (model == null)
             {
-                Debug.LogWarning($"{nameof(EntityModelBindingT<IdType, EntityType, ModelType>)}> Bind ½ÇÆÐ: ¸ðµ¨ÀÌ ºñ¾î ÀÖ´Ù");
+                Debug.LogWarning($"{nameof(EntityModelBindingT<IdType, EntityType, ModelType>)}> Bind ï¿½ï¿½ï¿½ï¿½: ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½");
                 return;
             }
 
@@ -61,7 +61,7 @@ namespace oojjrs.oh
 
         public void Remove(ModelType model, float delay = 0, bool destroyModel = true)
         {
-            if (model == default)
+            if (model == null)
                 return;
 
             if (_modelEntryTable.TryGetValue(model, out var entry) == false)
@@ -134,13 +134,13 @@ namespace oojjrs.oh
         private void WarnIfBindingExists(IdType id, EntityType entity, ModelType model)
         {
             if (_idEntryTable.ContainsKey(id))
-                Debug.LogWarning($"{nameof(EntityModelBindingT<IdType, EntityType, ModelType>)}> Bind °æ°í: °°Àº ID°¡ ÀÌ¹Ì ÀÖ´Ù");
+                Debug.LogWarning($"{nameof(EntityModelBindingT<IdType, EntityType, ModelType>)}> Bind ï¿½ï¿½ï¿½: ï¿½ï¿½ï¿½ï¿½ IDï¿½ï¿½ ï¿½Ì¹ï¿½ ï¿½Ö´ï¿½");
 
             if (_entityEntryTable.ContainsKey(entity))
-                Debug.LogWarning($"{nameof(EntityModelBindingT<IdType, EntityType, ModelType>)}> Bind °æ°í: °°Àº Entity°¡ ÀÌ¹Ì ÀÖ´Ù");
+                Debug.LogWarning($"{nameof(EntityModelBindingT<IdType, EntityType, ModelType>)}> Bind ï¿½ï¿½ï¿½: ï¿½ï¿½ï¿½ï¿½ Entityï¿½ï¿½ ï¿½Ì¹ï¿½ ï¿½Ö´ï¿½");
 
             if (_modelEntryTable.ContainsKey(model))
-                Debug.LogWarning($"{nameof(EntityModelBindingT<IdType, EntityType, ModelType>)}> Bind °æ°í: °°Àº ModelÀÌ ÀÌ¹Ì ÀÖ´Ù");
+                Debug.LogWarning($"{nameof(EntityModelBindingT<IdType, EntityType, ModelType>)}> Bind ï¿½ï¿½ï¿½: ï¿½ï¿½ï¿½ï¿½ Modelï¿½ï¿½ ï¿½Ì¹ï¿½ ï¿½Ö´ï¿½");
         }
     }
 }

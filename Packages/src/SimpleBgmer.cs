@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -22,7 +22,7 @@ namespace oojjrs.oh
 
         private IEnumerator Start()
         {
-            if (__instance != default)
+            if (__instance != null)
             {
                 var s = __instance.GetComponent<AudioSource>();
                 var time = Time.time;
@@ -42,7 +42,7 @@ namespace oojjrs.oh
 
             if (GetComponent<AudioSource>().loop)
             {
-                yield return new WaitUntil(() => this == default);
+                yield return new WaitUntil(() => this == null);
             }
             else
             {
@@ -54,7 +54,7 @@ namespace oojjrs.oh
                 }
             }
 
-            if (this != default)
+            if (this != null)
                 gameObject.Destroy();
         }
     }

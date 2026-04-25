@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace oojjrs.oh
 {
@@ -11,7 +11,7 @@ namespace oojjrs.oh
 
         private void Awake()
         {
-            if (Instance != default)
+            if (Instance != null)
             {
                 gameObject.Destroy();
             }

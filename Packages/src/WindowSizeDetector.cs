@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace oojjrs.oh
 {
@@ -32,20 +32,20 @@ namespace oojjrs.oh
         {
             if (Started)
             {
-                if (Initializer != default)
+                if (Initializer is not null)
                     Initializer.Initialize(Screen.width, Screen.height);
             }
         }
 
         private void Start()
         {
-            if (Callbacks == default)
+            if (Callbacks is null)
                 Debug.LogWarning($"{name}> DON'T HAVE CALLBACK FUNCTION.");
 
             CurrentHeight = Screen.height;
             CurrentWidth = Screen.width;
 
-            if (Initializer != default)
+            if (Initializer is not null)
                 Initializer.Initialize(CurrentWidth, CurrentHeight);
 
             Started = true;

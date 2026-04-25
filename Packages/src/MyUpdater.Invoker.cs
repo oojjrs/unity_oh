@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -129,7 +129,7 @@ namespace oojjrs.oh
                 if (IsRunning == false)
                     yield return new WaitUntil(() => IsRunning);
 
-                if (predict != default)
+                if (predict is not null)
                     yield return new WaitUntil(predict);
 
                 action?.Invoke();

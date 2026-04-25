@@ -1,11 +1,11 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace oojjrs.oh
 {
     public class ChronoInterfaceMachine : SingletonMonoBehaviourT<ChronoInterfaceMachine>
     {
-        public static float CurrentSpeed => (Instance != default) ? Instance.Speed : 1;
-        public static bool Pausing => (Instance != default) && Instance.State;
+        public static float CurrentSpeed => (Instance != null) ? Instance.Speed : 1;
+        public static bool Pausing => (Instance != null) && Instance.State;
 
         private float Speed { get; set; } = 1;
         private bool State { get; set; }
@@ -13,7 +13,7 @@ namespace oojjrs.oh
 
         public static void Add(ChronoInterface t)
         {
-            if (Instance == default)
+            if (Instance == null)
                 return;
 
             Instance.Values.Add(t);
@@ -21,7 +21,7 @@ namespace oojjrs.oh
 
         public static void Pause()
         {
-            if (Instance == default)
+            if (Instance == null)
                 return;
 
             Instance.State = true;
@@ -32,7 +32,7 @@ namespace oojjrs.oh
 
         public static void Remove(ChronoInterface t)
         {
-            if (Instance == default)
+            if (Instance == null)
                 return;
 
             Instance.Values.Remove(t);
@@ -40,7 +40,7 @@ namespace oojjrs.oh
 
         public static void Resume()
         {
-            if (Instance == default)
+            if (Instance == null)
                 return;
 
             Instance.State = false;
@@ -51,7 +51,7 @@ namespace oojjrs.oh
 
         public static void SetSpeed(float speed)
         {
-            if (Instance == default)
+            if (Instance == null)
                 return;
 
             Instance.Speed = speed;

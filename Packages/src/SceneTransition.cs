@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -18,7 +18,7 @@ namespace oojjrs.oh
         private IEnumerator Start()
         {
             var request = GetComponent<RequestInterface>();
-            if (request == default)
+            if (request is null)
             {
                 Debug.LogWarning($"{name}> MISSING {nameof(RequestInterface)}.");
                 yield break;
