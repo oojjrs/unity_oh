@@ -32,7 +32,7 @@ namespace oojjrs.oh
         {
             if (Started)
             {
-                if ((Initializer as UnityEngine.Object) != null)
+                if ((Initializer as Object) != null)
                     Initializer.Initialize(Screen.width, Screen.height);
             }
         }
@@ -45,7 +45,7 @@ namespace oojjrs.oh
             CurrentHeight = Screen.height;
             CurrentWidth = Screen.width;
 
-            if ((Initializer as UnityEngine.Object) != null)
+            if ((Initializer as Object) != null)
                 Initializer.Initialize(CurrentWidth, CurrentHeight);
 
             Started = true;
