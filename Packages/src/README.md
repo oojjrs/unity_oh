@@ -16,6 +16,7 @@
 - `LoaderT`, `TableT`, `FinderT`, `FinderInParentT` 기반의 참조 탐색 보조 타입
 - `SingletonMonoBehaviourT`, `MyUpdater`, `LifeTime` 같은 실행 흐름 보조 타입
 - `EntityModelBindingT`를 통한 Entity-Model 연결 관리
+- `MyStableEnumAttribute`로 문자열 필드에 enum 이름을 저장하는 에디터 드롭다운 제공
 
 ## LoaderT와 TableT
 
@@ -42,6 +43,18 @@
 - 같은 `Id`, `Entity`, `Model`이 이미 등록되어 있으면 경고 로그를 남긴다.
 - `TryGetModel`, `TryGetEntity`, `HasEntity`로 연결 상태를 조회할 수 있다.
 - `Remove`, `Clear`는 필요 시 연결된 모델 오브젝트 삭제까지 함께 처리할 수 있다.
+
+## MyStableEnumAttribute
+
+`MyStableEnumAttribute`는 enum 값을 정수 대신 문자열 이름으로 직렬화해야 하는 필드에 붙이는 속성이다. 대상 필드는 `string`이어야 하며, Unity Inspector에서는 지정한 enum 타입의 이름 목록을 드롭다운으로 보여 준다.
+
+```csharp
+[MyStableEnum(typeof(MyState))]
+public string StateName;
+```
+
+- enum 멤버 순서가 바뀌어도 저장된 값은 기존 이름을 유지한다.
+- 저장된 문자열이 enum 목록에 없으면 Inspector에서는 첫 번째 항목을 기본 선택값으로 표시한다.
 
 ## 사용 환경
 
