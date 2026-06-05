@@ -24,9 +24,11 @@ public sealed class StableEnumDrawer : PropertyDrawer
                 if (index < 0)
                     index = 0;
 
+                position = EditorGUI.PrefixLabel(position, label);
+
                 EditorGUI.BeginChangeCheck();
 
-                var nextIndex = EditorGUI.Popup(position, label.text, index, names);
+                var nextIndex = EditorGUI.Popup(position, index, names);
 
                 if (EditorGUI.EndChangeCheck())
                     property.stringValue = names[nextIndex];

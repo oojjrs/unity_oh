@@ -55,6 +55,7 @@ public string StateName;
 
 - enum 멤버 순서가 바뀌어도 저장된 값은 기존 이름을 유지한다.
 - Inspector 변경 감지와 Prefab override 표시가 Unity 기본 프로퍼티 처리 흐름을 따른다.
+- Inspector 라벨 영역을 Unity 기본 규칙에 맞춰 분리해 드롭다운 정렬을 유지한다.
 - 저장된 문자열이 enum 목록에 없으면 Inspector에서는 첫 번째 항목을 기본 선택값으로 표시한다.
 
 ## 사용 환경
