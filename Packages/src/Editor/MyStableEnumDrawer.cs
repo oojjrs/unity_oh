@@ -8,33 +8,37 @@ public sealed class StableEnumDrawer : PropertyDrawer
 {
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
-        EditorGUI.BeginProperty(position, label, property);
+        using (new EditorGUI.PropertyScope(position, label, property))
         {
-            var attr = (MyStableEnumAttribute)attribute;
-
             if (property.propertyType != SerializedPropertyType.String)
             {
                 EditorGUI.LabelField(position, label.text, $"{nameof(MyStableEnumAttribute)} requires string field");
+                return;
             }
-            else
+
+            var attr = (MyStableEnumAttribute)attribute;
+            var names = Enum.GetNames(attr.EnumType);
+            var index = Array.IndexOf(names, property.stringValue);
+
+            if (index < 0)
+                index = 0;
+
+            position = EditorGUI.PrefixLabel(position, label);
+
+            using (var cc = new EditorGUI.ChangeCheckScope())
             {
-                var names = Enum.GetNames(attr.EnumType);
-                var index = Array.IndexOf(names, property.stringValue);
-
-                if (index < 0)
-                    index = 0;
-
-                position = EditorGUI.PrefixLabel(position, label);
-
-                EditorGUI.BeginChangeCheck();
-
                 var nextIndex = EditorGUI.Popup(position, index, names);
 
-                if (EditorGUI.EndChangeCheck())
+                if (cc.changed)
                     property.stringValue = names[nextIndex];
             }
+
+            if (property.prefabOverride)
+            {
+                var lineRect = new Rect(position.x - 14f, position.y + 1f, 2f, position.height - 2f);
+                EditorGUI.DrawRect(lineRect, new Color(0.1f, 0.47f, 1f, 1f));
+            }
         }
-        EditorGUI.EndProperty();
     }
 }
 #endif
