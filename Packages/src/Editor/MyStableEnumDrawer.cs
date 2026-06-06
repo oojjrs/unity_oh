@@ -6,8 +6,8 @@ using UnityEngine;
 [CustomPropertyDrawer(typeof(MyStableEnumAttribute))]
 public sealed class MyStableEnumDrawer : PropertyDrawer
 {
-    private const float PrefabOverrideLineOffset = 31f;
     private const float PrefabOverrideLineWidth = 2f;
+    private static readonly Color PrefabOverrideLineColor = new(0.1f, 0.47f, 1f, 1f);
 
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
@@ -38,16 +38,40 @@ public sealed class MyStableEnumDrawer : PropertyDrawer
                     property.stringValue = names[nextIndex];
             }
 
-            if (property.prefabOverride)
+            if (IsPrefabOverride(property))
             {
                 var lineRect = new Rect(
-                    propertyPosition.x - PrefabOverrideLineOffset,
+                    propertyPosition.x,
                     propertyPosition.y + 1f,
                     PrefabOverrideLineWidth,
                     propertyPosition.height - 2f);
-                EditorGUI.DrawRect(lineRect, new Color(0.1f, 0.47f, 1f, 1f));
+                EditorGUI.DrawRect(lineRect, PrefabOverrideLineColor);
             }
         }
+    }
+
+    private static bool IsPrefabOverride(SerializedProperty property)
+    {
+        if (property.prefabOverride)
+            return true;
+
+        var target = property.serializedObject.targetObject;
+
+        if (target == null || !PrefabUtility.IsPartOfPrefabInstance(target))
+            return false;
+
+        var modifications = PrefabUtility.GetPropertyModifications(target);
+
+        if (modifications == null)
+            return false;
+
+        foreach (var modification in modifications)
+        {
+            if (modification.propertyPath == property.propertyPath)
+                return true;
+        }
+
+        return false;
     }
 }
 #endif
