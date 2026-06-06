@@ -4,15 +4,20 @@ using UnityEditor;
 using UnityEngine;
 
 [CustomPropertyDrawer(typeof(MyStableEnumAttribute))]
-public sealed class StableEnumDrawer : PropertyDrawer
+public sealed class MyStableEnumDrawer : PropertyDrawer
 {
+    private const float PrefabOverrideLineOffset = 31f;
+    private const float PrefabOverrideLineWidth = 2f;
+
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
-        using (new EditorGUI.PropertyScope(position, label, property))
+        var propertyPosition = position;
+
+        using (new EditorGUI.PropertyScope(propertyPosition, label, property))
         {
             if (property.propertyType != SerializedPropertyType.String)
             {
-                EditorGUI.LabelField(position, label.text, $"{nameof(MyStableEnumAttribute)} requires string field");
+                EditorGUI.LabelField(propertyPosition, label.text, $"{nameof(MyStableEnumAttribute)} requires string field");
                 return;
             }
 
@@ -35,7 +40,11 @@ public sealed class StableEnumDrawer : PropertyDrawer
 
             if (property.prefabOverride)
             {
-                var lineRect = new Rect(position.x - 14f, position.y + 1f, 2f, position.height - 2f);
+                var lineRect = new Rect(
+                    propertyPosition.x - PrefabOverrideLineOffset,
+                    propertyPosition.y + 1f,
+                    PrefabOverrideLineWidth,
+                    propertyPosition.height - 2f);
                 EditorGUI.DrawRect(lineRect, new Color(0.1f, 0.47f, 1f, 1f));
             }
         }
