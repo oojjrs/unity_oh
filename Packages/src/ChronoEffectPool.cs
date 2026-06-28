@@ -13,7 +13,7 @@ namespace oojjrs.oh
                 var e = Object.Instantiate(prefab);
                 e.SetActiveSafety(false);
                 return e;
-            }, obj => obj.DestroyObject(), chunkSize)
+            }, obj => obj.DestroyObjectSafety(), chunkSize)
         {
         }
 

@@ -13,7 +13,7 @@ namespace oojjrs.oh
             if (_seconds > 0)
                 yield return new ChronoWaitForSeconds(_seconds);
 
-            gameObject.Destroy();
+            gameObject.DestroySafety();
         }
     }
 }

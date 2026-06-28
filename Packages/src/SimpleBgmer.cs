@@ -34,7 +34,7 @@ namespace oojjrs.oh
                     yield return null;
                 }
 
-                __instance.DestroyObject();
+                __instance.DestroyObjectSafety();
             }
 
             GetComponent<AudioSource>().Play();
@@ -55,7 +55,7 @@ namespace oojjrs.oh
             }
 
             if (this != null)
-                gameObject.Destroy();
+                gameObject.DestroySafety();
         }
     }
 }

@@ -13,7 +13,7 @@ namespace oojjrs.oh
         {
             if (Instance != null)
             {
-                gameObject.Destroy();
+                gameObject.DestroySafety();
             }
             else
             {

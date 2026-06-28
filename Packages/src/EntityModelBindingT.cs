@@ -47,7 +47,7 @@ namespace oojjrs.oh
         public void Clear()
         {
             foreach (var model in Models)
-                model.DestroyObject();
+                model.DestroyObjectSafety();
 
             _entityEntryTable.Clear();
             _idEntryTable.Clear();
@@ -72,9 +72,9 @@ namespace oojjrs.oh
             if (destroyModel)
             {
                 if (delay > 0)
-                    model.DestroyObject(delay);
+                    model.DestroyObjectSafety(delay);
                 else
-                    model.DestroyObject();
+                    model.DestroyObjectSafety();
             }
         }
 

@@ -78,7 +78,7 @@ namespace oojjrs.oh
 
         protected void DestroySelf()
         {
-            gameObject.Destroy();
+            gameObject.DestroySafety();
         }
 
         protected virtual void OnAwake() { }

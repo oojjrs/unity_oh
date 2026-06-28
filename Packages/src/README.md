@@ -12,6 +12,8 @@
 ## 포함 기능
 
 - `Component`, `GameObject`, `Transform`, `Animator`, `AudioMixer` 등을 위한 확장 메서드
+- `Object.DestroySafety`, `GameObject.DestroySafety`, `Component.DestroyObjectSafety`로 null-safe 파괴 호출을 구분
+- `Object` 계열 prefab에 대해 `prefab.Instantiate()` 형태의 생성 보조 메서드 제공
 - `TransformExtensions`에서 `RotationSafety`, `LocalRotationSafety`로 Quaternion 회전 설정을 안전하게 처리
 - `LoaderT`, `TableT`, `FinderT`, `FinderInParentT` 기반의 참조 탐색 보조 타입
 - `SingletonMonoBehaviourT`, `MyUpdater`, `LifeTime` 같은 실행 흐름 보조 타입
