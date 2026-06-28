@@ -21,7 +21,7 @@
 
 ## SimpleLog
 
-`SimpleLog`는 컴포넌트가 붙은 GameObject의 주요 Unity 메시지 시점에 Inspector에서 지정한 로그를 출력하는 보조 컴포넌트이다. 각 메시지는 Unity 기본 `LogType`을 사용해 `Log`, `Warning`, `Error` 등 출력 타입을 선택할 수 있다.
+`SimpleLog`는 컴포넌트가 붙은 GameObject의 주요 Unity 메시지 시점에 Inspector에서 지정한 로그를 출력하는 보조 컴포넌트이다. 각 메시지는 Unity 기본 `LogType`을 사용해 `Log`, `Warning`, `Error` 등 출력 타입을 선택할 수 있다. 출력 로그에는 GameObject 이름과 이벤트 이름이 `GameObjectName> EventName: 메시지` 형식으로 자동 포함된다.
 
 지원하는 시점은 아래와 같다.
 
@@ -30,8 +30,8 @@
 - `Start`
 - `OnDisable`
 - `OnDestroy`
-- `OnApplicationFocus(true)` / `OnApplicationFocus(false)`
-- `OnApplicationPause(true)` / `OnApplicationPause(false)`
+- `OnApplicationFocus` / `OnApplicationBlur`
+- `OnApplicationPause` / `OnApplicationResume`
 - `OnApplicationQuit`
 
 ## LoaderT와 TableT
