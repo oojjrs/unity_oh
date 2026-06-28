@@ -15,8 +15,24 @@
 - `TransformExtensions`에서 `RotationSafety`, `LocalRotationSafety`로 Quaternion 회전 설정을 안전하게 처리
 - `LoaderT`, `TableT`, `FinderT`, `FinderInParentT` 기반의 참조 탐색 보조 타입
 - `SingletonMonoBehaviourT`, `MyUpdater`, `LifeTime` 같은 실행 흐름 보조 타입
+- `SimpleLog`를 통한 Unity 생명주기와 애플리케이션 상태 로그 출력
 - `EntityModelBindingT`를 통한 Entity-Model 연결 관리
 - `MyStableEnumAttribute`로 문자열 필드에 enum 이름을 저장하는 에디터 드롭다운 제공
+
+## SimpleLog
+
+`SimpleLog`는 컴포넌트가 붙은 GameObject의 주요 Unity 메시지 시점에 Inspector에서 지정한 로그를 출력하는 보조 컴포넌트이다. 각 메시지는 Unity 기본 `LogType`을 사용해 `Log`, `Warning`, `Error` 등 출력 타입을 선택할 수 있다.
+
+지원하는 시점은 아래와 같다.
+
+- `Awake`
+- `OnEnable`
+- `Start`
+- `OnDisable`
+- `OnDestroy`
+- `OnApplicationFocus(true)` / `OnApplicationFocus(false)`
+- `OnApplicationPause(true)` / `OnApplicationPause(false)`
+- `OnApplicationQuit`
 
 ## LoaderT와 TableT
 
