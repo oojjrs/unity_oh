@@ -12,6 +12,7 @@
 ## 포함 기능
 
 - `Component`, `GameObject`, `Transform`, `Animator`, `AudioMixer` 등을 위한 확장 메서드
+- `AnimatorExtensions`에서 enum 값을 Animator integer 파라미터로 저장하고 다시 enum으로 읽는 `SetIntegerSafety<T>`, `GetIntegerSafety<T>` 오버로드 제공
 - `Object.DestroySafety`, `GameObject.DestroySafety`, `Component.DestroyObjectSafety`로 null-safe 파괴 호출을 구분
 - `Object` 계열 prefab에 대해 `prefab.Instantiate()` 형태의 생성 보조 메서드 제공
 - `TransformExtensions`에서 `RotationSafety`, `LocalRotationSafety`로 Quaternion 회전 설정을 안전하게 처리
@@ -20,6 +21,18 @@
 - `SimpleLog`를 통한 Unity 생명주기와 애플리케이션 상태 로그 출력
 - `EntityModelBindingT`를 통한 Entity-Model 연결 관리
 - `MyStableEnumAttribute`로 문자열 필드에 enum 이름을 저장하는 에디터 드롭다운 제공
+
+## AnimatorExtensions
+
+`AnimatorExtensions`는 null-safe Animator 호출을 제공한다. `SetIntegerSafety<T>`는 enum 값을 `int`로 변환해 Animator integer 파라미터에 저장하고, `GetIntegerSafety<T>`는 Animator에 저장된 정수를 enum 값으로 되돌린다.
+
+```csharp
+animator.SetIntegerSafety(ActionHash, ActionEnum.Attack);
+var action = animator.GetIntegerSafety(ActionHash, ActionEnum.None);
+```
+
+- `Animator`가 null이면 setter는 아무 동작도 하지 않고, enum getter는 전달된 기본값을 반환한다.
+- 저장된 정수는 enum 정의 여부를 별도로 검증하지 않고 해당 enum 타입의 값으로 복원한다.
 
 ## SimpleLog
 

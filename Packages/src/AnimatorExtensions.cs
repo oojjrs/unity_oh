@@ -51,6 +51,21 @@ public static class AnimatorExtensions
             return 0;
     }
 
+    public static T GetIntegerSafety<T>(this Animator a, int id, T defValue = default) where T : Enum
+    {
+        if (a != null)
+            return (T)Enum.ToObject(typeof(T), a.GetInteger(id));
+        else
+            return defValue;
+    }
+
+    public static T GetIntegerSafety<T>(this Animator a, string name, T defValue = default) where T : Enum
+    {
+        if (a != null)
+            return (T)Enum.ToObject(typeof(T), a.GetInteger(name));
+        else
+            return defValue;
+    }
 
     public static float GetSpeedSafety(this Animator a)
     {
@@ -106,6 +121,18 @@ public static class AnimatorExtensions
     {
         if (a != null)
             a.SetInteger(name, value);
+    }
+
+    public static void SetIntegerSafety<T>(this Animator a, int id, T value) where T : Enum
+    {
+        if (a != null)
+            a.SetInteger(id, Convert.ToInt32(value));
+    }
+
+    public static void SetIntegerSafety<T>(this Animator a, string name, T value) where T : Enum
+    {
+        if (a != null)
+            a.SetInteger(name, Convert.ToInt32(value));
     }
 
     public static void SetSpeedSafety(this Animator a, float speed)
