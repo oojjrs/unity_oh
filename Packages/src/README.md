@@ -13,6 +13,7 @@
 
 - `Component`, `GameObject`, `Transform`, `Animator`, `AudioMixer` 등을 위한 확장 메서드
 - `AnimatorExtensions`에서 enum 값을 Animator integer 파라미터로 저장하고 다시 enum으로 읽는 `SetIntegerSafety<T>`, `GetIntegerSafety<T>` 오버로드 제공
+- `MyAnimator`에서 enum 값을 Action integer 파라미터로 재생하는 `aaPlayAction<T>`, `aaPlayActionOnce<T>` 오버로드 제공
 - `Object.DestroySafety`, `GameObject.DestroySafety`, `Component.DestroyObjectSafety`로 null-safe 파괴 호출을 구분
 - `Object` 계열 prefab에 대해 `prefab.Instantiate()` 형태의 생성 보조 메서드 제공
 - `TransformExtensions`에서 `RotationSafety`, `LocalRotationSafety`로 Quaternion 회전 설정을 안전하게 처리
@@ -34,6 +35,21 @@ var action = animator.GetIntegerSafety(ActionHash, ActionEnum.None);
 
 - `Animator`가 null이면 setter는 아무 동작도 하지 않고, enum getter는 전달된 기본값을 반환한다.
 - 저장된 정수는 enum 정의 여부를 별도로 검증하지 않고 해당 enum 타입의 값으로 복원한다.
+
+## MyAnimator
+
+`MyAnimator`는 `Action` integer 파라미터를 사용해 액션 애니메이션을 재생하는 보조 컴포넌트이다. enum 오버로드는 enum 값을 `int`로 변환해 기존 Action 재생 경로를 그대로 사용한다.
+
+```csharp
+myAnimator.aaPlayAction(ActionEnum.Attack);
+myAnimator.aaPlayActionOnce(ActionEnum.Attack);
+myAnimator.aaPlayActionSafety(ActionEnum.Attack);
+myAnimator.aaPlayActionOnceSafety(ActionEnum.Attack);
+```
+
+- `aaPlayAction<T>`는 현재 액션을 중단한 뒤 새 Action 값을 설정한다.
+- `aaPlayActionOnce<T>`는 기존 1회성 액션 종료 감지와 중복 호출 방지 흐름을 유지한다.
+- safety extension은 `MyAnimator`가 null이면 기존 int overload와 같은 경고 로그를 출력한다.
 
 ## SimpleLog
 

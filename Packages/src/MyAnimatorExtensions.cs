@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public static class MyAnimatorExtensions
@@ -10,7 +11,23 @@ public static class MyAnimatorExtensions
             Debug.LogWarning($"PlayAction IS FAILED: THE ANIMATOR IS NULL");
     }
 
+    public static void aaPlayActionSafety<T>(this MyAnimator a, T value) where T : Enum
+    {
+        if (a != null)
+            a.aaPlayAction(value);
+        else
+            Debug.LogWarning($"PlayAction IS FAILED: THE ANIMATOR IS NULL");
+    }
+
     public static void aaPlayActionOnceSafety(this MyAnimator a, int value)
+    {
+        if (a != null)
+            a.aaPlayActionOnce(value);
+        else
+            Debug.LogWarning($"PlayActionOnce IS FAILED: THE ANIMATOR IS NULL");
+    }
+
+    public static void aaPlayActionOnceSafety<T>(this MyAnimator a, T value) where T : Enum
     {
         if (a != null)
             a.aaPlayActionOnce(value);

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -34,6 +35,11 @@ public class MyAnimator : MonoBehaviour
         aaStopActionOnce();
 
         _animatorCached.SetInteger(ActionHash, value);
+    }
+
+    public void aaPlayAction<T>(T value) where T : Enum
+    {
+        aaPlayAction(Convert.ToInt32(value));
     }
 
     public void aaPlayActionOnce(int value)
@@ -114,6 +120,11 @@ public class MyAnimator : MonoBehaviour
 
             _actionCoroutine = null;
         }
+    }
+
+    public void aaPlayActionOnce<T>(T value) where T : Enum
+    {
+        aaPlayActionOnce(Convert.ToInt32(value));
     }
 
     public void aaStopActionOnce()
