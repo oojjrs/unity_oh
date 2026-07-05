@@ -17,6 +17,7 @@
 - `Object` 계열 prefab에 대해 `prefab.Instantiate()` 형태의 생성 보조 메서드 제공
 - `TransformExtensions`에서 `RotationSafety`, `LocalRotationSafety`로 Quaternion 회전 설정을 안전하게 처리
 - `LoaderT`, `TableT`, `FinderT`, `FinderInParentT` 기반의 참조 탐색 보조 타입
+- `AnimatorFinderFromVariable`, `MyAnimatorFinderFromVariable`로 Inspector 지정 Animator 참조 제공
 - `SingletonMonoBehaviourT`, `MyUpdater`, `LifeTime` 같은 실행 흐름 보조 타입
 - `SimpleLog`를 통한 Unity 생명주기와 애플리케이션 상태 로그 출력
 - `EntityModelBindingT`를 통한 Entity-Model 연결 관리
