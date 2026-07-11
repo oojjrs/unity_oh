@@ -23,6 +23,7 @@
 - `SimpleLog`를 통한 Unity 생명주기와 애플리케이션 상태 로그 출력
 - `EntityModelBindingT`를 통한 Entity-Model 연결 관리
 - `MyStableEnumAttribute`로 문자열 필드에 enum 이름을 저장하는 에디터 드롭다운 제공
+- `WindowSizeDetector`로 화면 크기 변경 시 너비와 높이를 콜백에 전달
 
 ## AnimatorExtensions
 

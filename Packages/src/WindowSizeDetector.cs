@@ -64,7 +64,7 @@ namespace oojjrs.oh
                     CurrentWidth = Screen.width;
 
                     foreach (var callback in Callbacks)
-                        callback.Update(CurrentHeight, CurrentWidth);
+                        callback.Update(CurrentWidth, CurrentHeight);
                 }
             }
         }
