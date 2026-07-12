@@ -28,6 +28,9 @@ namespace oojjrs.oh
 
             yield return request.OnLoadBeginAsync();
 
+            if (this == null)
+                yield break;
+
             if (string.IsNullOrWhiteSpace(request.SceneName))
             {
                 Debug.Log($"{name}> LOAD SKIPPED: NO SCENE NAME.");
@@ -43,10 +46,17 @@ namespace oojjrs.oh
                 {
                     yield return SceneManager.LoadSceneAsync(request.SceneName);
                 }
+
+                if (this == null)
+                    yield break;
+
                 Debug.Log($"{name}> LOAD END: {Time.time - time} sec");
             }
 
             yield return request.OnLoadEndAsync();
+
+            if (this == null)
+                yield break;
 
             Debug.Log($"{name}> END.");
         }

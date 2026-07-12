@@ -17,6 +17,9 @@ public class AutoDisabler : MonoBehaviour
             else
                 yield return null;
 
+            if (this == null)
+                yield break;
+
             gameObject.SetActiveSafety(false);
         }
     }

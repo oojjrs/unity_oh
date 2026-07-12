@@ -43,6 +43,9 @@ namespace oojjrs.oh
                 // Start-Update일 때와 OnEnable일 때 1프레임 처리가 다른 것을 방지하기 위해 OnEnable도 1프레임을 강제로 미뤄주었다.
                 yield return new WaitUntil(() => IsStarted);
 
+                if (this == null)
+                    yield break;
+
                 OnEnabled();
 
                 if (IsStartCalled == false)

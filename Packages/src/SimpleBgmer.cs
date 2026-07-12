@@ -32,10 +32,16 @@ namespace oojjrs.oh
                     s.volume = Mathf.Lerp(v, 0, Mathf.Clamp01((Time.time - time) / _fadeoutTimeSeconds));
 
                     yield return null;
+
+                    if (this == null)
+                        yield break;
                 }
 
                 __instance.DestroyObjectSafety();
             }
+
+            if (this == null)
+                yield break;
 
             GetComponent<AudioSource>().Play();
             __instance = this;
@@ -49,6 +55,9 @@ namespace oojjrs.oh
                 while (true)
                 {
                     yield return new WaitForSeconds(GetComponent<AudioSource>().clip.length + Mathf.Max(_intervalTimeSeconds, 0));
+
+                    if (this == null)
+                        yield break;
 
                     GetComponent<AudioSource>().Play();
                 }

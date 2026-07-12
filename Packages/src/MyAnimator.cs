@@ -83,6 +83,9 @@ public class MyAnimator : MonoBehaviour
             // AnimatorStateInfo에서 값이 꼬이지 않도록 초기화 타이밍을 보장함
             yield return new WaitForEndOfFrame();
 
+            if (this == null)
+                yield break;
+
             var startState = _animatorCached.IsInTransition(TargetLayer) ? _animatorCached.GetNextAnimatorStateInfo(TargetLayer) : _animatorCached.GetCurrentAnimatorStateInfo(TargetLayer);
             if (startState.loop)
                 Debug.LogWarning($"{name}> 루프 애니메이션 경고: VALUE({value})");
@@ -113,6 +116,9 @@ public class MyAnimator : MonoBehaviour
                 }
 
                 yield return null;
+
+                if (this == null)
+                    yield break;
             }
 
             if (_animatorCached.GetInteger(ActionHash) == value)

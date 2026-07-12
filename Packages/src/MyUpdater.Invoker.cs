@@ -21,6 +21,9 @@ namespace oojjrs.oh
                 if (time > 0)
                     yield return new ChronoWaitForSeconds(time);
 
+                if (this == null)
+                    yield break;
+
                 action?.Invoke();
             }
         }
@@ -39,6 +42,9 @@ namespace oojjrs.oh
 
                 if (time > 0)
                     yield return new ChronoWaitForSeconds(time);
+
+                if (this == null)
+                    yield break;
 
                 action?.Invoke();
 
@@ -83,6 +89,9 @@ namespace oojjrs.oh
 
                 yield return null;
 
+                if (this == null)
+                    yield break;
+
                 action?.Invoke();
 
                 NamedCoroutines.Remove(invokerName);
@@ -114,6 +123,9 @@ namespace oojjrs.oh
                 if (time > 0)
                     yield return new ChronoWaitForSeconds(time);
 
+                if (this == null)
+                    yield break;
+
                 action?.Invoke();
 
                 NamedCoroutines.Remove(invokerName);
@@ -131,6 +143,9 @@ namespace oojjrs.oh
 
                 if (predict is not null)
                     yield return new WaitUntil(predict);
+
+                if (this == null)
+                    yield break;
 
                 action?.Invoke();
             }
@@ -160,6 +175,9 @@ namespace oojjrs.oh
             if (IsRunning == false)
                 yield return new WaitUntil(() => IsRunning || (isKeepGoingFunc() == false));
 
+            if (this == null)
+                yield break;
+
             while (isKeepGoingFunc())
             {
                 action?.Invoke();
@@ -172,6 +190,9 @@ namespace oojjrs.oh
                     yield return new ChronoWaitForSeconds(sec, () => isKeepGoingFunc() == false);
                 else
                     yield return null;
+
+                if (this == null)
+                    yield break;
             }
 
             onFinal?.Invoke();
