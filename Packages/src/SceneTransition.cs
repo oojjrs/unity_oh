@@ -28,7 +28,7 @@ namespace oojjrs.oh
 
             yield return request.OnLoadBeginAsync();
 
-            if (this == null)
+            if (this == null || (request as Object) == null)
                 yield break;
 
             if (string.IsNullOrWhiteSpace(request.SceneName))
@@ -47,7 +47,7 @@ namespace oojjrs.oh
                     yield return SceneManager.LoadSceneAsync(request.SceneName);
                 }
 
-                if (this == null)
+                if (this == null || (request as Object) == null)
                     yield break;
 
                 Debug.Log($"{name}> LOAD END: {Time.time - time} sec");
@@ -55,7 +55,7 @@ namespace oojjrs.oh
 
             yield return request.OnLoadEndAsync();
 
-            if (this == null)
+            if (this == null || (request as Object) == null)
                 yield break;
 
             Debug.Log($"{name}> END.");

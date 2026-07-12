@@ -83,7 +83,7 @@ public class MyAnimator : MonoBehaviour
             // AnimatorStateInfo에서 값이 꼬이지 않도록 초기화 타이밍을 보장함
             yield return new WaitForEndOfFrame();
 
-            if (this == null)
+            if (this == null || _animatorCached == null)
                 yield break;
 
             var startState = _animatorCached.IsInTransition(TargetLayer) ? _animatorCached.GetNextAnimatorStateInfo(TargetLayer) : _animatorCached.GetCurrentAnimatorStateInfo(TargetLayer);
@@ -109,7 +109,10 @@ public class MyAnimator : MonoBehaviour
                     if (_actionEnds?.Length > 0)
                     {
                         foreach (var actionEnd in _actionEnds)
-                            actionEnd.OnActionEnd(_currentActionValue);
+                        {
+                            if ((actionEnd as UnityEngine.Object) != null)
+                                actionEnd.OnActionEnd(_currentActionValue);
+                        }
                     }
 
                     break;
@@ -117,7 +120,7 @@ public class MyAnimator : MonoBehaviour
 
                 yield return null;
 
-                if (this == null)
+                if (this == null || _animatorCached == null)
                     yield break;
             }
 
