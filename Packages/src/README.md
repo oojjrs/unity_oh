@@ -25,6 +25,17 @@
 - `EntityModelBindingT`를 통한 Entity-Model 연결 관리
 - `MyStableEnumAttribute`로 문자열 필드에 enum 이름을 저장하는 에디터 드롭다운 제공
 - `WindowSizeDetector`로 화면 크기 변경 시 너비와 높이를 콜백에 전달
+- `DevelopmentBuildPlayerPrefsResetter`로 개발 빌드의 애플리케이션 버전 변경 시 `PlayerPrefs` 초기화
+
+## DevelopmentBuildPlayerPrefsResetter
+
+`DevelopmentBuildPlayerPrefsResetter`는 개발 빌드에서 `Application.version`을 기록하고, 이전 실행에서 기록한 버전과 달라졌을 때 `PlayerPrefs.DeleteAll()`을 호출하는 일회성 컴포넌트이다.
+
+- 시작 Scene의 전용 GameObject에 추가한다. 처리가 끝나면 해당 GameObject를 제거하므로 다른 컴포넌트를 함께 추가하지 않는다.
+- 최초 실행에는 기존 값을 유지하고 현재 버전만 기록한다.
+- Inspector에서 `Delete On First Run`을 활성화하면 최초 실행에도 전체 값을 삭제한다.
+- Unity Editor 또는 `Debug.isDebugBuild`가 참인 빌드에서만 `PlayerPrefs`를 변경한다.
+- 개별 데이터 마이그레이션이나 이전 버전 보존이 필요하면 애플리케이션의 저장 로직에서 별도로 처리한다.
 
 ## AnimatorExtensions
 
