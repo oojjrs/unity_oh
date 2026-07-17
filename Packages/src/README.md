@@ -22,6 +22,7 @@
 - `SingletonMonoBehaviourT`, `MyUpdater`, `LifeTime` 같은 실행 흐름 보조 타입
 - `SimpleLog`를 통한 Unity 생명주기와 애플리케이션 상태 로그 출력
 - 코루틴 기반 컴포넌트에서 `yield return` 복귀 후 `this`와 캐시된 Unity 객체 접근 방지
+- `MyUpdater` named invoker의 자연 종료, 명시 취소, 즉시 완료 시 실행 이름 등록 정리
 - `EntityModelBindingT`를 통한 Entity-Model 연결 관리
 - `MyStableEnumAttribute`로 문자열 필드에 enum 이름을 저장하는 에디터 드롭다운 제공
 - `WindowSizeDetector`로 화면 크기 변경 시 너비와 높이를 콜백에 전달
