@@ -26,7 +26,30 @@
 - `EntityModelBindingT`를 통한 Entity-Model 연결 관리
 - `MyStableEnumAttribute`로 문자열 필드에 enum 이름을 저장하는 에디터 드롭다운 제공
 - `WindowSizeDetector`로 화면 크기 변경 시 너비와 높이를 콜백에 전달
+- `InputDetector`로 키보드, 마우스, 게임패드 버튼 입력 경로를 콜백에 전달
 - `DevelopmentBuildPlayerPrefsResetter`로 개발 빌드의 애플리케이션 버전 변경 시 `PlayerPrefs` 초기화
+
+## InputDetector
+
+`InputDetector`는 키보드, 마우스, 게임패드에서 눌린 버튼의 Input System 경로를 같은 GameObject의 `CallbackInterface` 구현체에 전달한다.
+
+```csharp
+using oojjrs.oh;
+using UnityEngine;
+
+[RequireComponent(typeof(InputDetector))]
+public class InputDetectorReceiver : MonoBehaviour, InputDetector.CallbackInterface
+{
+    void InputDetector.CallbackInterface.Update(string path)
+    {
+        Debug.Log(path);
+    }
+}
+```
+
+- 콜백 구현체는 `InputDetector`와 같은 GameObject에 추가한다.
+- 게임패드 경로의 장치 이름은 `Gamepad`로 통일된다.
+- 프로젝트의 Active Input Handling은 `Input System Package (New)` 또는 `Both`로 설정해야 한다.
 
 ## DevelopmentBuildPlayerPrefsResetter
 
