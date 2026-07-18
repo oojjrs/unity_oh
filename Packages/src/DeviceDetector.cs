@@ -33,11 +33,11 @@ namespace oojjrs.oh
 
         private const float ActivationMagnitudeThreshold = 0.1f;
 
-        [SerializeField] private bool _debugLog;
-
         private CallbackInterface _callback;
         private InputDevice _currentDevice;
         private DeviceEnum? _currentDeviceEnum;
+        [SerializeField]
+        private bool _debugLog;
         private System.Action<DeviceEnum> _gamepadCallback;
         private bool _keyboardAvailable;
         private System.Action _keyboardCallback;
