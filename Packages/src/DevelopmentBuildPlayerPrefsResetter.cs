@@ -35,8 +35,6 @@ namespace oojjrs.oh
                     SaveVersion(currentVersion);
                 }
             }
-
-            this.DestroySafety();
         }
 
         private void SaveVersion(string version)

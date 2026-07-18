@@ -136,7 +136,7 @@ public class DeviceDetectorReceiver : MonoBehaviour, DeviceDetector.CallbackInte
 
 `DevelopmentBuildPlayerPrefsResetter`는 개발 빌드에서 `Application.version`을 기록하고, 이전 실행에서 기록한 버전과 달라졌을 때 `PlayerPrefs.DeleteAll()`을 호출하는 일회성 컴포넌트이다.
 
-- 처리가 끝나면 컴포넌트 자신만 제거하므로 `CoreSingleton`과 같은 GameObject에 함께 추가할 수 있다.
+- `Awake()`에서 한 번 처리한 뒤 컴포넌트를 유지하므로 `CoreSingleton`의 필수 구성으로 계속 둘 수 있다.
 - 최초 실행에는 기존 값을 유지하고 현재 버전만 기록한다.
 - Inspector에서 `Delete On First Run`을 활성화하면 최초 실행에도 전체 값을 삭제한다.
 - Unity Editor 또는 `Debug.isDebugBuild`가 참인 빌드에서만 `PlayerPrefs`를 변경한다.
@@ -228,7 +228,7 @@ public string StateName;
 
 - Unity `6000.3`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.31.3`
+- Package version: `1.31.4`
 
 ## 참고
 
