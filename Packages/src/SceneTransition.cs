@@ -16,8 +16,35 @@ namespace oojjrs.oh
             IEnumerator OnLoadEndAsync();
         }
 
-        private IEnumerator Start()
+        private Coroutine _transitionCoroutine;
+        private bool _isCanceled;
+
+        private void Start()
         {
+            _transitionCoroutine = StartCoroutine(TransitionCoroutine());
+        }
+
+        private void OnDestroy()
+        {
+            Cancel();
+        }
+
+        public void Cancel()
+        {
+            _isCanceled = true;
+
+            if (_transitionCoroutine != null)
+            {
+                StopCoroutine(_transitionCoroutine);
+                _transitionCoroutine = null;
+            }
+        }
+
+        private IEnumerator TransitionCoroutine()
+        {
+            if (_isCanceled == true)
+                yield break;
+
             var request = GetComponent<RequestInterface>();
             if ((request as Object) == null)
             {
@@ -29,7 +56,7 @@ namespace oojjrs.oh
 
             yield return request.OnLoadBeginAsync();
 
-            if (this == null || (request as Object) == null)
+            if ((_isCanceled == true) || (this == null) || ((request as Object) == null))
                 yield break;
 
             if (string.IsNullOrWhiteSpace(request.SceneName))
@@ -48,7 +75,7 @@ namespace oojjrs.oh
                     yield return SceneManager.LoadSceneAsync(request.SceneName);
                 }
 
-                if (this == null || (request as Object) == null)
+                if ((_isCanceled == true) || (this == null) || ((request as Object) == null))
                     yield break;
 
                 Debug.Log($"{name}> LOAD END: {Time.time - time} sec");
@@ -56,10 +83,11 @@ namespace oojjrs.oh
 
             yield return request.OnLoadEndAsync();
 
-            if (this == null || (request as Object) == null)
+            if ((_isCanceled == true) || (this == null) || ((request as Object) == null))
                 yield break;
 
             Debug.Log($"{name}> END.");
+            _transitionCoroutine = null;
         }
     }
 }
