@@ -65,8 +65,8 @@ using UnityEngine;
 public class DeviceDetectorReceiver : MonoBehaviour, DeviceDetector.CallbackInterface
 {
     void DeviceDetector.CallbackInterface.OnCurrentDeviceChanged(DeviceDetector.DeviceEnum? previousDevice, DeviceDetector.DeviceEnum currentDevice) { }
-    void DeviceDetector.CallbackInterface.OnDeviceConnected(DeviceDetector.DeviceEnum device) { }
-    void DeviceDetector.CallbackInterface.OnDeviceDisconnected(DeviceDetector.DeviceEnum device) { }
+    void DeviceDetector.CallbackInterface.OnDeviceConnected(DeviceDetector.DeviceEnum device, int gamepadCount) { }
+    void DeviceDetector.CallbackInterface.OnDeviceDisconnected(DeviceDetector.DeviceEnum device, int gamepadCount) { }
     void DeviceDetector.CallbackInterface.OnGamepadInput(DeviceDetector.DeviceEnum gamepad) { }
     void DeviceDetector.CallbackInterface.OnKeyboardExtendedInput() { }
     void DeviceDetector.CallbackInterface.OnKeyboardInput() { }
@@ -78,7 +78,8 @@ public class DeviceDetectorReceiver : MonoBehaviour, DeviceDetector.CallbackInte
 ```
 
 - 콜백 구현체는 `DeviceDetector`와 같은 GameObject에 하나만 추가한다.
-- 시작할 때 이미 연결된 모든 장치를 `OnDeviceConnected()`로 전달하며, 이후 `Added`와 `Removed` 상태에 정확히 반응한다.
+- 사용자 컴포넌트의 `Start()`가 끝난 다음 프레임에 연결된 물리 장치를 `OnDeviceConnected()`로 전달하며, 키보드나 마우스가 없으면 각 전용 콜백으로 초기 상태를 알린다. 초기 스냅샷 전에는 입력 콜백을 호출하지 않는다.
+- 초기화 이후에는 물리 장치가 연결되거나 해제될 때마다 `OnDeviceConnected()`와 `OnDeviceDisconnected()`를 호출한다. 두 콜백의 `gamepadCount`에는 변경 후 연결되어 있는 전체 게임패드 수를 전달하므로 공개 API에 `InputDevice`를 노출하지 않고도 남은 패드 수를 판단할 수 있다.
 - 입력으로 현재 물리 장치가 바뀌면 `OnCurrentDeviceChanged()`에 이전 장치 종류와 현재 장치 종류를 전달한 뒤 해당 입력 종류 콜백을 호출한다.
 - 공개 API에는 Unity Input System의 `InputDevice`를 노출하지 않고 패키지 자체 `DeviceEnum`만 사용한다.
 - PlayStation 계열은 `DualShockGamepad`, Xbox 계열은 `XInputController` 레이아웃 상속으로 판별한다.
@@ -90,6 +91,9 @@ public class DeviceDetectorReceiver : MonoBehaviour, DeviceDetector.CallbackInte
 - 일반 문자·숫자·기호, Ctrl·Alt·Shift, 탐색키, CapsLock·NumLock, 숫자 패드, F1~F12만 키보드 전환 입력으로 허용한다.
 - PrintScreen·ScrollLock·Pause, Meta·Windows, ContextMenu, OEM, F13~F24, 미디어·IME 키와 이후 추가되는 미분류 키는 `OnKeyboardExtendedInput()`으로 한 번만 전달하되 현재 장치를 키보드로 바꾸지 않는다. 일반 키나 다른 장치 입력이 들어오거나 키보드가 해제되면 다시 호출할 수 있게 초기화한다.
 - 입력 크기 `0.1` 이상의 실제 상태 변화만 처리하므로 장치 연결만으로는 콜백하지 않는다.
+- Inspector의 `Debug Log`를 켜면 컴포넌트 활성화 상태, 공개 콜백 호출, 장치 종류와 레이아웃·ID, 변경 후 게임패드 수, 현재 장치 전환을 추적할 수 있다. 기본값은 꺼짐이며 입력 이벤트가 무시되는 핫패스에는 로그를 남기지 않는다.
+- `InputDetector`, `WindowSizeDetector`, `MyUpdater`, `ChronoInterfaceMachine`, `SimpleBgmer`, `AutoDisabler`, `LifeTime`도 Inspector의 `Debug Log`를 켰을 때만 입력 전달, 상태 전환, 예약·취소·완료 같은 상세 진단 로그를 출력한다.
+- 씬 전환, Singleton 수명, 영구 오브젝트 존속, 개발 빌드 데이터 초기화처럼 시스템 흐름 복원에 필요한 기존 로그와 모든 경고는 디버그 설정과 관계없이 항상 출력한다.
 - 프로젝트의 Active Input Handling은 `Input System Package (New)` 또는 `Both`로 설정해야 한다.
 
 ## DevelopmentBuildPlayerPrefsResetter
