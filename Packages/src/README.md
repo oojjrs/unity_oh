@@ -78,7 +78,7 @@ public class DeviceDetectorReceiver : MonoBehaviour, DeviceDetector.CallbackInte
 ```
 
 - 콜백 구현체는 `DeviceDetector`와 같은 GameObject에 하나만 추가한다.
-- 사용자 컴포넌트의 `Start()`가 끝난 다음 프레임에 연결된 물리 장치를 `OnDeviceConnected()`로 전달한다. 키보드나 마우스가 없으면 각 전용 콜백으로 초기 상태를 알리고, 초기 스냅샷 전에는 입력 콜백을 호출하지 않는다.
+- 사용자 컴포넌트의 `Start()`가 끝난 다음 프레임에 연결된 물리 장치를 `OnDeviceConnected()`로 전달한다. 대기 중 비활성화되면 초기화 코루틴을 취소하고, 초기화 전에 다시 활성화되면 다음 프레임 초기화를 재예약한다. 키보드나 마우스가 없으면 각 전용 콜백으로 초기 상태를 알리고, 초기 스냅샷 전에는 입력 콜백을 호출하지 않는다.
 - 초기화 이후에는 물리 장치가 연결되거나 해제될 때마다 `OnDeviceConnected()`와 `OnDeviceDisconnected()`를 호출한다. 연결 콜백에는 새로 연결된 장치 종류만 전달한다. 해제 콜백의 `deviceCount`에는 변경 후 같은 `DeviceEnum` 장치 수를, `gamepadCount`에는 변경 후 전체 게임패드 수를 전달한다.
 - 입력으로 현재 물리 장치가 바뀌면 `OnCurrentDeviceChanged()`에 이전 장치 종류와 현재 장치 종류를 전달한 뒤 해당 입력 종류 콜백을 호출한다.
 - 공개 API에는 Unity Input System의 `InputDevice`를 노출하지 않고 패키지 자체 `DeviceEnum`만 사용한다.
