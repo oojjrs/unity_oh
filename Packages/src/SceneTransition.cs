@@ -26,10 +26,16 @@ namespace oojjrs.oh
 
         private void OnDestroy()
         {
-            Cancel();
+            StopTransition();
         }
 
         public void Cancel()
+        {
+            StopTransition();
+            gameObject.DestroySafety();
+        }
+
+        private void StopTransition()
         {
             _isCanceled = true;
 
