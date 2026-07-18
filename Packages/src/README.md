@@ -65,8 +65,8 @@ using UnityEngine;
 public class DeviceDetectorReceiver : MonoBehaviour, DeviceDetector.CallbackInterface
 {
     void DeviceDetector.CallbackInterface.OnCurrentDeviceChanged(DeviceDetector.DeviceEnum? previousDevice, DeviceDetector.DeviceEnum currentDevice) { }
-    void DeviceDetector.CallbackInterface.OnDeviceConnected(DeviceDetector.DeviceEnum device, int gamepadCount) { }
-    void DeviceDetector.CallbackInterface.OnDeviceDisconnected(DeviceDetector.DeviceEnum device, int gamepadCount) { }
+    void DeviceDetector.CallbackInterface.OnDeviceConnected(DeviceDetector.DeviceEnum device, int deviceCount, int gamepadCount, bool isInitialState) { }
+    void DeviceDetector.CallbackInterface.OnDeviceDisconnected(DeviceDetector.DeviceEnum device, int deviceCount, int gamepadCount) { }
     void DeviceDetector.CallbackInterface.OnGamepadInput(DeviceDetector.DeviceEnum gamepad) { }
     void DeviceDetector.CallbackInterface.OnKeyboardExtendedInput() { }
     void DeviceDetector.CallbackInterface.OnKeyboardInput() { }
@@ -78,8 +78,8 @@ public class DeviceDetectorReceiver : MonoBehaviour, DeviceDetector.CallbackInte
 ```
 
 - 콜백 구현체는 `DeviceDetector`와 같은 GameObject에 하나만 추가한다.
-- 사용자 컴포넌트의 `Start()`가 끝난 다음 프레임에 연결된 물리 장치를 `OnDeviceConnected()`로 전달하며, 키보드나 마우스가 없으면 각 전용 콜백으로 초기 상태를 알린다. 초기 스냅샷 전에는 입력 콜백을 호출하지 않는다.
-- 초기화 이후에는 물리 장치가 연결되거나 해제될 때마다 `OnDeviceConnected()`와 `OnDeviceDisconnected()`를 호출한다. 두 콜백의 `gamepadCount`에는 변경 후 연결되어 있는 전체 게임패드 수를 전달하므로 공개 API에 `InputDevice`를 노출하지 않고도 남은 패드 수를 판단할 수 있다.
+- 사용자 컴포넌트의 `Start()`가 끝난 다음 프레임에 연결된 물리 장치를 `OnDeviceConnected()`로 전달하며 `isInitialState`를 `true`로 설정한다. 초기 장치 열거 순서는 실제 연결 순서가 아니므로, 마지막 연결 장치 정책에는 `isInitialState`가 `false`인 실행 중 연결만 사용한다. 키보드나 마우스가 없으면 각 전용 콜백으로 초기 상태를 알리고, 초기 스냅샷 전에는 입력 콜백을 호출하지 않는다.
+- 초기화 이후에는 물리 장치가 연결되거나 해제될 때마다 `OnDeviceConnected()`와 `OnDeviceDisconnected()`를 호출한다. `deviceCount`에는 변경 후 같은 `DeviceEnum` 장치 수를, `gamepadCount`에는 변경 후 전체 게임패드 수를 전달하므로 공개 API에 `InputDevice`를 노출하지 않고도 해당 종류가 완전히 사라졌는지와 남은 전체 패드 수를 모두 판단할 수 있다.
 - 입력으로 현재 물리 장치가 바뀌면 `OnCurrentDeviceChanged()`에 이전 장치 종류와 현재 장치 종류를 전달한 뒤 해당 입력 종류 콜백을 호출한다.
 - 공개 API에는 Unity Input System의 `InputDevice`를 노출하지 않고 패키지 자체 `DeviceEnum`만 사용한다.
 - PlayStation 계열은 `DualShockGamepad`, Xbox 계열은 `XInputController` 레이아웃 상속으로 판별한다.
