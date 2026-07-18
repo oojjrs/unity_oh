@@ -27,7 +27,7 @@
 - `MyStableEnumAttribute`로 문자열 필드에 enum 이름을 저장하는 에디터 드롭다운 제공
 - `WindowSizeDetector`로 화면 크기 변경 시 너비와 높이를 콜백에 전달
 - `InputDetector`로 키보드, 마우스, 게임패드 버튼 입력 경로를 콜백에 전달
-- `DeviceDetector`로 실제 입력 장치를 키보드·마우스, PlayStation, Xbox, 기타 게임패드 콜백으로 구분
+- `DeviceDetector`로 장치 연결 상태와 현재 입력 장치를 키보드, 마우스, PlayStation, Xbox, 기타 게임패드 콜백으로 구분
 - `DevelopmentBuildPlayerPrefsResetter`로 개발 빌드의 애플리케이션 버전 변경 시 `PlayerPrefs` 초기화
 - 단일 동작만 허용하는 런타임 컴포넌트의 동일 GameObject 중복 부착 방지
 
@@ -55,7 +55,7 @@ public class InputDetectorReceiver : MonoBehaviour, InputDetector.CallbackInterf
 
 ## DeviceDetector
 
-`DeviceDetector`는 `PlayerInput` 없이 실제 입력 이벤트를 감지하고, 같은 GameObject의 단일 `CallbackInterface` 구현체에 장치별 콜백을 전달한다.
+`DeviceDetector`는 `PlayerInput` 없이 장치 연결 상태와 실제 입력으로 바뀐 현재 장치를 감지하고, 같은 GameObject의 단일 `CallbackInterface` 구현체에 세분화된 콜백을 전달한다.
 
 ```csharp
 using oojjrs.oh;
@@ -64,16 +64,31 @@ using UnityEngine;
 [RequireComponent(typeof(DeviceDetector))]
 public class DeviceDetectorReceiver : MonoBehaviour, DeviceDetector.CallbackInterface
 {
-    void DeviceDetector.CallbackInterface.OnGamepadPlayStation() { }
-    void DeviceDetector.CallbackInterface.OnGamepadThirdParty() { }
-    void DeviceDetector.CallbackInterface.OnGamepadXbox() { }
-    void DeviceDetector.CallbackInterface.OnKeyboardMouse() { }
+    void DeviceDetector.CallbackInterface.OnCurrentDeviceChanged(DeviceDetector.DeviceEnum? previousDevice, DeviceDetector.DeviceEnum currentDevice) { }
+    void DeviceDetector.CallbackInterface.OnDeviceConnected(DeviceDetector.DeviceEnum device) { }
+    void DeviceDetector.CallbackInterface.OnDeviceDisconnected(DeviceDetector.DeviceEnum device) { }
+    void DeviceDetector.CallbackInterface.OnGamepadInput(DeviceDetector.DeviceEnum gamepad) { }
+    void DeviceDetector.CallbackInterface.OnKeyboardExtendedInput() { }
+    void DeviceDetector.CallbackInterface.OnKeyboardInput() { }
+    void DeviceDetector.CallbackInterface.OnKeyboardUnavailable() { }
+    void DeviceDetector.CallbackInterface.OnMouseButtonInput() { }
+    void DeviceDetector.CallbackInterface.OnMouseMove() { }
+    void DeviceDetector.CallbackInterface.OnMouseUnavailable() { }
 }
 ```
 
 - 콜백 구현체는 `DeviceDetector`와 같은 GameObject에 하나만 추가한다.
+- 시작할 때 이미 연결된 모든 장치를 `OnDeviceConnected()`로 전달하며, 이후 `Added`와 `Removed` 상태에 정확히 반응한다.
+- 입력으로 현재 물리 장치가 바뀌면 `OnCurrentDeviceChanged()`에 이전 장치 종류와 현재 장치 종류를 전달한 뒤 해당 입력 종류 콜백을 호출한다.
+- 공개 API에는 Unity Input System의 `InputDevice`를 노출하지 않고 패키지 자체 `DeviceEnum`만 사용한다.
 - PlayStation 계열은 `DualShockGamepad`, Xbox 계열은 `XInputController` 레이아웃 상속으로 판별한다.
-- 그 밖의 `Gamepad` 레이아웃은 `OnGamepadThirdParty()`로 전달한다.
+- 게임패드 입력은 `OnGamepadInput()` 하나로 전달하며 인자의 `DeviceEnum`으로 PlayStation, Xbox, 기타 계열을 구분한다.
+- 키보드 입력은 `OnKeyboardInput()`으로 전달한다.
+- 마우스 이동은 `OnMouseMove()`로 전달해 커서 표시만 처리할 수 있고, 같은 마우스의 첫 버튼 입력은 `OnMouseButtonInput()`으로 따로 전달해 UI 표시 전환을 처리할 수 있다.
+- 패드나 키보드로 현재 장치가 바뀌면 마우스 버튼 활성 상태를 초기화하며, 다시 마우스를 움직인 뒤 버튼을 누를 때 같은 순서로 콜백한다.
+- 키보드와 마우스의 사용 가능 상태를 각각 추적하고, 없어지면 `OnKeyboardUnavailable()`과 `OnMouseUnavailable()`을 따로 호출한다.
+- 일반 문자·숫자·기호, Ctrl·Alt·Shift, 탐색키, CapsLock·NumLock, 숫자 패드, F1~F12만 키보드 전환 입력으로 허용한다.
+- PrintScreen·ScrollLock·Pause, Meta·Windows, ContextMenu, OEM, F13~F24, 미디어·IME 키와 이후 추가되는 미분류 키는 `OnKeyboardExtendedInput()`으로 한 번만 전달하되 현재 장치를 키보드로 바꾸지 않는다. 일반 키나 다른 장치 입력이 들어오거나 키보드가 해제되면 다시 호출할 수 있게 초기화한다.
 - 입력 크기 `0.1` 이상의 실제 상태 변화만 처리하므로 장치 연결만으로는 콜백하지 않는다.
 - 프로젝트의 Active Input Handling은 `Input System Package (New)` 또는 `Both`로 설정해야 한다.
 

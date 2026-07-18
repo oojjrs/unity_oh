@@ -7,67 +7,338 @@ namespace oojjrs.oh
     [DisallowMultipleComponent]
     public class DeviceDetector : MonoBehaviour
     {
+        public enum DeviceEnum
+        {
+            GamepadPlayStation,
+            GamepadThirdParty,
+            GamepadXbox,
+            Keyboard,
+            Mouse,
+        }
+
         public interface CallbackInterface
         {
-            void OnGamepadPlayStation();
-            void OnGamepadThirdParty();
-            void OnGamepadXbox();
-            void OnKeyboardMouse();
+            void OnCurrentDeviceChanged(DeviceEnum? previousDevice, DeviceEnum currentDevice);
+            void OnDeviceConnected(DeviceEnum device);
+            void OnDeviceDisconnected(DeviceEnum device);
+            void OnGamepadInput(DeviceEnum gamepad);
+            void OnKeyboardExtendedInput();
+            void OnKeyboardInput();
+            void OnKeyboardUnavailable();
+            void OnMouseButtonInput();
+            void OnMouseMove();
+            void OnMouseUnavailable();
         }
 
         private const float ActivationMagnitudeThreshold = 0.1f;
 
         private CallbackInterface _callback;
+        private InputDevice _currentDevice;
+        private DeviceEnum? _currentDeviceEnum;
+        private System.Action<DeviceEnum> _gamepadCallback;
+        private bool _keyboardAvailable;
+        private System.Action _keyboardCallback;
+        private System.Action _keyboardExtendedCallback;
+        private bool _keyboardExtendedInputActivated;
+        private bool _mouseAvailable;
+        private System.Action _mouseButtonCallback;
+        private bool _mouseButtonInputActivated;
+        private System.Action _mouseMoveCallback;
+        private bool _started;
 
         private void Awake()
         {
             _callback = GetComponent<CallbackInterface>();
+            if (_callback != null)
+            {
+                _gamepadCallback = _callback.OnGamepadInput;
+                _keyboardCallback = _callback.OnKeyboardInput;
+                _keyboardExtendedCallback = _callback.OnKeyboardExtendedInput;
+                _mouseButtonCallback = _callback.OnMouseButtonInput;
+                _mouseMoveCallback = _callback.OnMouseMove;
+            }
         }
 
         private void OnDisable()
         {
+            InputSystem.onDeviceChange -= OnDeviceChange;
             InputSystem.onEvent -= OnInputEvent;
+
+            _currentDevice = null;
+            _currentDeviceEnum = null;
+            _keyboardExtendedInputActivated = false;
+            _mouseButtonInputActivated = false;
         }
 
         private void OnEnable()
         {
+            InputSystem.onDeviceChange += OnDeviceChange;
             InputSystem.onEvent += OnInputEvent;
         }
 
         private void Start()
         {
             if (_callback == null)
+            {
                 Debug.LogWarning($"{name}> DON'T HAVE CALLBACK FUNCTION.");
+                return;
+            }
+
+            foreach (var device in InputSystem.devices)
+            {
+                var deviceEnum = GetDeviceEnum(device);
+                if (deviceEnum.HasValue)
+                    _callback.OnDeviceConnected(deviceEnum.Value);
+            }
+
+            _keyboardAvailable = HasKeyboard();
+            _mouseAvailable = HasMouse();
+
+            if (_keyboardAvailable == false)
+                _callback.OnKeyboardUnavailable();
+
+            if (_mouseAvailable == false)
+                _callback.OnMouseUnavailable();
+
+            _started = true;
+        }
+
+        private void OnDeviceChange(InputDevice device, InputDeviceChange change)
+        {
+            if ((_callback == null) || (_started == false))
+                return;
+
+            if (change == InputDeviceChange.Added)
+            {
+                var deviceEnum = GetDeviceEnum(device);
+                if (deviceEnum.HasValue)
+                    _callback.OnDeviceConnected(deviceEnum.Value);
+            }
+            else if (change == InputDeviceChange.Removed)
+            {
+                var deviceEnum = GetDeviceEnum(device);
+                if (deviceEnum.HasValue)
+                    _callback.OnDeviceDisconnected(deviceEnum.Value);
+
+                if (device == _currentDevice)
+                {
+                    _currentDevice = null;
+                    _currentDeviceEnum = null;
+                    _mouseButtonInputActivated = false;
+                }
+
+                if (device is Keyboard)
+                    _keyboardExtendedInputActivated = false;
+            }
+
+            UpdateKeyboardAvailability();
+            UpdateMouseAvailability();
         }
 
         private void OnInputEvent(InputEventPtr inputEvent, InputDevice device)
         {
+            if (_callback == null)
+                return;
+
             if ((inputEvent.type != StateEvent.Type) && (inputEvent.type != DeltaStateEvent.Type))
+                return;
+
+            if (device is Mouse mouse)
+            {
+                OnMouseInputEvent(inputEvent, mouse);
+                return;
+            }
+
+            if (device is Keyboard keyboard)
+            {
+                OnKeyboardInputEvent(inputEvent, keyboard);
+                return;
+            }
+
+            if (device == _currentDevice)
+                return;
+
+            var deviceEnum = GetDeviceEnum(device);
+            if (deviceEnum.HasValue == false)
                 return;
 
             foreach (var _ in inputEvent.EnumerateChangedControls(device, ActivationMagnitudeThreshold))
             {
-                UpdateCallback(device);
+                UpdateCallback(device, deviceEnum.Value);
                 break;
             }
         }
 
-        private void UpdateCallback(InputDevice device)
+        private void OnKeyboardInputEvent(InputEventPtr inputEvent, Keyboard keyboard)
         {
-            if (device is Gamepad gamepad)
-                UpdateGamepadCallback(gamepad);
-            else if ((device is Keyboard) || (device is Mouse))
-                _callback?.OnKeyboardMouse();
+            var hasExtendedInput = false;
+            var hasStandardInput = false;
+
+            foreach (var control in inputEvent.EnumerateChangedControls(keyboard, ActivationMagnitudeThreshold))
+            {
+                if (control is not UnityEngine.InputSystem.Controls.KeyControl key)
+                    continue;
+
+                if (IsSupportedKey(key))
+                    hasStandardInput = true;
+                else
+                    hasExtendedInput = true;
+            }
+
+            if (hasStandardInput)
+                _keyboardExtendedInputActivated = false;
+
+            if (hasExtendedInput && (_keyboardExtendedInputActivated == false))
+            {
+                _keyboardExtendedInputActivated = true;
+                _keyboardExtendedCallback();
+            }
+
+            if (hasStandardInput && (keyboard != _currentDevice))
+                UpdateCallback(keyboard, DeviceEnum.Keyboard);
         }
 
-        private void UpdateGamepadCallback(Gamepad gamepad)
+        private void OnMouseInputEvent(InputEventPtr inputEvent, Mouse mouse)
+        {
+            if (_mouseButtonInputActivated && (mouse == _currentDevice))
+                return;
+
+            if (inputEvent.HasButtonPress())
+            {
+                UpdateCurrentDevice(mouse, DeviceEnum.Mouse);
+
+                _mouseButtonInputActivated = true;
+                _mouseButtonCallback();
+                return;
+            }
+
+            if (mouse == _currentDevice)
+                return;
+
+            foreach (var control in inputEvent.EnumerateChangedControls(mouse, ActivationMagnitudeThreshold))
+            {
+                if ((control != mouse.delta) && (control != mouse.position))
+                    continue;
+
+                UpdateCurrentDevice(mouse, DeviceEnum.Mouse);
+                _mouseMoveCallback();
+                break;
+            }
+        }
+
+        private DeviceEnum? GetDeviceEnum(InputDevice device)
+        {
+            if (device is Gamepad gamepad)
+                return GetGamepadDeviceEnum(gamepad);
+
+            if (device is Keyboard)
+                return DeviceEnum.Keyboard;
+
+            if (device is Mouse)
+                return DeviceEnum.Mouse;
+
+            return null;
+        }
+
+        private DeviceEnum GetGamepadDeviceEnum(Gamepad gamepad)
         {
             if (InputSystem.IsFirstLayoutBasedOnSecond(gamepad.layout, "DualShockGamepad"))
-                _callback?.OnGamepadPlayStation();
-            else if (InputSystem.IsFirstLayoutBasedOnSecond(gamepad.layout, "XInputController"))
-                _callback?.OnGamepadXbox();
-            else
-                _callback?.OnGamepadThirdParty();
+                return DeviceEnum.GamepadPlayStation;
+
+            if (InputSystem.IsFirstLayoutBasedOnSecond(gamepad.layout, "XInputController"))
+                return DeviceEnum.GamepadXbox;
+
+            return DeviceEnum.GamepadThirdParty;
+        }
+
+        private bool HasKeyboard()
+        {
+            foreach (var device in InputSystem.devices)
+            {
+                if (device is Keyboard)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private bool HasMouse()
+        {
+            foreach (var device in InputSystem.devices)
+            {
+                if (device is Mouse)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private bool IsSupportedKey(UnityEngine.InputSystem.Controls.KeyControl key)
+        {
+            return key.keyCode switch
+            {
+                >= Key.Space and <= Key.Digit0 => true,
+                >= Key.LeftShift and <= Key.RightCtrl => true,
+                >= Key.Escape and <= Key.NumLock => true,
+                >= Key.NumpadEnter and <= Key.Numpad9 => true,
+                >= Key.F1 and <= Key.F12 => true,
+                _ => false,
+            };
+        }
+
+        private void UpdateCallback(InputDevice device, DeviceEnum deviceEnum)
+        {
+            UpdateCurrentDevice(device, deviceEnum);
+
+            if ((_currentDeviceEnum == DeviceEnum.GamepadPlayStation) ||
+                (_currentDeviceEnum == DeviceEnum.GamepadThirdParty) ||
+                (_currentDeviceEnum == DeviceEnum.GamepadXbox))
+            {
+                _gamepadCallback(_currentDeviceEnum.Value);
+            }
+            else if (_currentDeviceEnum == DeviceEnum.Keyboard)
+            {
+                _keyboardCallback();
+            }
+        }
+
+        private void UpdateCurrentDevice(InputDevice device, DeviceEnum deviceEnum)
+        {
+            var previousDevice = _currentDeviceEnum;
+            var physicalDeviceChanged = device != _currentDevice;
+
+            _currentDevice = device;
+            _currentDeviceEnum = deviceEnum;
+
+            if (_currentDeviceEnum != DeviceEnum.Keyboard)
+                _keyboardExtendedInputActivated = false;
+
+            if ((_currentDeviceEnum != DeviceEnum.Mouse) || physicalDeviceChanged)
+                _mouseButtonInputActivated = false;
+
+            _callback.OnCurrentDeviceChanged(previousDevice, _currentDeviceEnum.Value);
+        }
+
+        private void UpdateKeyboardAvailability()
+        {
+            var keyboardAvailable = HasKeyboard();
+            if (keyboardAvailable == _keyboardAvailable)
+                return;
+
+            _keyboardAvailable = keyboardAvailable;
+            if (_keyboardAvailable == false)
+                _callback.OnKeyboardUnavailable();
+        }
+
+        private void UpdateMouseAvailability()
+        {
+            var mouseAvailable = HasMouse();
+            if (mouseAvailable == _mouseAvailable)
+                return;
+
+            _mouseAvailable = mouseAvailable;
+            if (_mouseAvailable == false)
+                _callback.OnMouseUnavailable();
         }
     }
 }
