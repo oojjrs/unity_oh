@@ -50,7 +50,7 @@ Core GameObject의 Receiver는 필요한 계약을 구현한다.
 
 | Interface | Purpose |
 | --- | --- |
-| `CoreSingleton.AudioInterface` | `AudioMixer`와 Master, Music, Sound 볼륨을 실제 오디오 시스템에 적용 |
+| `CoreSingleton.AudioInterface` | Master, Music, Sound 볼륨을 실제 오디오 시스템에 적용 |
 | `CoreSingleton.AudioSettingsInterface` | 저장된 오디오 볼륨과 백그라운드 재생 설정 제공 |
 | `CoreSingleton.CallbackInterface` | `OnAwakened()`, `OnInitialized()` 시점에 프로젝트 상태 반영 |
 | `CoreSingleton.EntryInterface` | `EnterCoroutine()`에서 Localization과 시스템 준비를 기다린 뒤 Startup이 아닌 다음 Scene으로 이동 |
@@ -58,6 +58,8 @@ Core GameObject의 Receiver는 필요한 계약을 구현한다.
 | `ApplicationMonitor.*CallbackInterface` | 프로젝트에서 필요한 Focus, Pause, Quit 추가 처리 |
 
 `EntryInterface.EnterCoroutine()`은 Startup Scene을 초기화 전용 Scene으로 유지하기 위한 필수 진입 단계이다. Core는 공통 초기화와 `OnInitialized()` 호출 후 이 코루틴이 끝날 때까지 기다린다.
+
+직렬화된 `AudioMixer`는 `CoreSingleton`이 직접 소유하며 읽기 전용 `AudioMixer` 속성으로 제공한다. 프로젝트 오디오 구현은 별도의 Mixer setter를 구현하지 않고 이 속성을 참조한다.
 
 ## Ticker
 
@@ -230,7 +232,7 @@ public string StateName;
 
 - Unity `6000.3`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.31.0`
+- Package version: `1.31.1`
 
 ## 참고
 

@@ -14,7 +14,6 @@ namespace oojjrs.oh
     {
         public interface AudioInterface
         {
-            AudioMixer AudioMixer { set; }
             float MasterVolume { set; }
             float MusicVolume { set; }
             float SoundVolume { set; }
@@ -48,8 +47,6 @@ namespace oojjrs.oh
         private bool _isFocused = true;
         private bool _isPaused;
 
-        public static CoreSingleton This => Instance;
-
         protected override void OnAwake()
         {
             _audio = GetComponent<AudioInterface>();
@@ -57,21 +54,10 @@ namespace oojjrs.oh
             _callback = GetComponent<CallbackInterface>();
             _entry = GetComponent<EntryInterface>();
 
-            if (_audio == null)
-                Debug.LogWarning($"{name}> MISSING {nameof(AudioInterface)}.");
-            else
-                _audio.AudioMixer = _audioMixer;
-
-            if (_audioSettings == null)
-                Debug.LogWarning($"{name}> MISSING {nameof(AudioSettingsInterface)}.");
-
-            if (_callback == null)
-                Debug.LogWarning($"{name}> MISSING {nameof(CallbackInterface)}.");
-            else
+            if (_callback != null)
                 _callback.OnAwakened();
-
-            if (_entry == null)
-                Debug.LogWarning($"{name}> MISSING {nameof(EntryInterface)}.");
+            else
+                Debug.LogWarning($"{name}> MISSING {nameof(CallbackInterface)}.");
         }
 
         void ApplicationMonitor.FocusCallbackInterface.OnApplicationFocus(bool focus)
@@ -88,32 +74,47 @@ namespace oojjrs.oh
 
         private void ApplyAudioSettings()
         {
-            if ((_audio == null) || (_audioSettings == null))
-                return;
-
-            _audio.MasterVolume = _audioSettings.MasterVolume;
-            _audio.MusicVolume = _audioSettings.MusicVolume;
-            _audio.SoundVolume = _audioSettings.SoundVolume;
+            if (_audio != null)
+            {
+                if (_audioSettings != null)
+                {
+                    _audio.MasterVolume = _audioSettings.MasterVolume;
+                    _audio.MusicVolume = _audioSettings.MusicVolume;
+                    _audio.SoundVolume = _audioSettings.SoundVolume;
+                }
+                else
+                {
+                    Debug.LogWarning($"{name}> MISSING {nameof(AudioSettingsInterface)}.");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"{name}> MISSING {nameof(AudioInterface)}.");
+            }
         }
 
         private IEnumerator Start()
         {
             ApplyAudioSettings();
-            _callback?.OnInitialized();
+
+            if (_callback != null)
+                _callback.OnInitialized();
 
             if (_entry != null)
                 yield return _entry.EnterCoroutine();
+            else
+                Debug.LogWarning($"{name}> MISSING {nameof(EntryInterface)}.");
         }
 
         private void UpdateMasterVolume()
         {
-            if ((_audio == null) || (_audioSettings == null) || (_audioSettings.IsBackgroundAudioEnabled == true))
-                return;
-
-            if ((_isFocused == true) && (_isPaused == false))
-                _audio.MasterVolume = _audioSettings.MasterVolume;
-            else
-                _audio.MasterVolume = 0;
+            if ((_audio != null) && (_audioSettings != null) && (_audioSettings.IsBackgroundAudioEnabled == false))
+            {
+                if ((_isFocused == true) && (_isPaused == false))
+                    _audio.MasterVolume = _audioSettings.MasterVolume;
+                else
+                    _audio.MasterVolume = 0;
+            }
         }
     }
 }
