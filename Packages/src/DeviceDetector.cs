@@ -20,7 +20,7 @@ namespace oojjrs.oh
         public interface CallbackInterface
         {
             void OnCurrentDeviceChanged(DeviceEnum? previousDevice, DeviceEnum currentDevice);
-            void OnDeviceConnected(DeviceEnum device, int deviceCount, int gamepadCount, bool isInitialState);
+            void OnDeviceConnected(DeviceEnum device);
             void OnDeviceDisconnected(DeviceEnum device, int deviceCount, int gamepadCount);
             void OnGamepadInput(DeviceEnum gamepad);
             void OnKeyboardExtendedInput();
@@ -124,7 +124,7 @@ namespace oojjrs.oh
             {
                 var deviceEnum = GetDeviceEnum(device);
                 if (deviceEnum.HasValue)
-                    NotifyDeviceConnected(deviceEnum.Value, CountDevices(deviceEnum.Value), CountGamepads(), false, device);
+                    NotifyDeviceConnected(deviceEnum.Value, device);
             }
             else if (change == InputDeviceChange.Removed)
             {
@@ -347,12 +347,12 @@ namespace oojjrs.oh
                 Debug.Log($"{name}> {callbackName}.", this);
         }
 
-        private void NotifyDeviceConnected(DeviceEnum deviceEnum, int deviceCount, int gamepadCount, bool isInitialState, InputDevice device)
+        private void NotifyDeviceConnected(DeviceEnum deviceEnum, InputDevice device)
         {
             if (_debugLog)
-                Debug.Log($"{name}> {nameof(CallbackInterface.OnDeviceConnected)}: device={deviceEnum}, deviceCount={deviceCount}, gamepadCount={gamepadCount}, isInitialState={isInitialState}, input={GetInputDeviceDebugName(device)}.", this);
+                Debug.Log($"{name}> {nameof(CallbackInterface.OnDeviceConnected)}: device={deviceEnum}, input={GetInputDeviceDebugName(device)}.", this);
 
-            _callback.OnDeviceConnected(deviceEnum, deviceCount, gamepadCount, isInitialState);
+            _callback.OnDeviceConnected(deviceEnum);
         }
 
         private void NotifyDeviceDisconnected(DeviceEnum deviceEnum, int deviceCount, int gamepadCount, InputDevice device)
@@ -365,15 +365,13 @@ namespace oojjrs.oh
 
         private void NotifyConnectedDevices()
         {
-            var gamepadCount = CountGamepads();
-
             foreach (var device in InputSystem.devices)
             {
                 var deviceEnum = GetDeviceEnum(device);
                 if (deviceEnum.HasValue == false)
                     continue;
 
-                NotifyDeviceConnected(deviceEnum.Value, CountDevices(deviceEnum.Value), gamepadCount, true, device);
+                NotifyDeviceConnected(deviceEnum.Value, device);
             }
         }
 
