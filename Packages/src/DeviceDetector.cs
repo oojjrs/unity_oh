@@ -39,6 +39,7 @@ namespace oojjrs.oh
         [SerializeField]
         private bool _debugLog;
         private System.Action<DeviceEnum> _gamepadCallback;
+        private Coroutine _initializationCoroutine;
         private bool _keyboardAvailable;
         private System.Action _keyboardCallback;
         private System.Action _keyboardExtendedCallback;
@@ -47,6 +48,7 @@ namespace oojjrs.oh
         private System.Action _mouseButtonCallback;
         private bool _mouseButtonInputActivated;
         private System.Action _mouseMoveCallback;
+        private bool _startCalled;
         private bool _started;
 
         private void Awake()
@@ -70,6 +72,12 @@ namespace oojjrs.oh
             InputSystem.onDeviceChange -= OnDeviceChange;
             InputSystem.onEvent -= OnInputEvent;
 
+            if (_initializationCoroutine != null)
+            {
+                StopCoroutine(_initializationCoroutine);
+                _initializationCoroutine = null;
+            }
+
             _currentDevice = null;
             _currentDeviceEnum = null;
             _keyboardExtendedInputActivated = false;
@@ -81,19 +89,42 @@ namespace oojjrs.oh
             InputSystem.onDeviceChange += OnDeviceChange;
             InputSystem.onEvent += OnInputEvent;
 
+            if (_startCalled && (_started == false))
+                BeginInitialization();
+
             if (_debugLog)
                 Debug.Log($"{name}> DeviceDetector enabled.", this);
         }
 
-        private IEnumerator Start()
+        private void Start()
         {
             if (_callback == null)
             {
                 Debug.LogWarning($"{name}> DON'T HAVE CALLBACK FUNCTION.");
-                yield break;
+                return;
             }
 
+            _startCalled = true;
+            BeginInitialization();
+        }
+
+        private void BeginInitialization()
+        {
+            if (_initializationCoroutine == null)
+                _initializationCoroutine = StartCoroutine(InitializeAfterOneFrame());
+        }
+
+        private IEnumerator InitializeAfterOneFrame()
+        {
             yield return null;
+
+            if (this == null)
+                yield break;
+
+            _initializationCoroutine = null;
+
+            if ((isActiveAndEnabled == false) || ((_callback as Object) == null))
+                yield break;
 
             _keyboardAvailable = HasKeyboard();
             _mouseAvailable = HasMouse();
@@ -112,7 +143,6 @@ namespace oojjrs.oh
                 LogCallback(nameof(CallbackInterface.OnMouseUnavailable));
                 _callback.OnMouseUnavailable();
             }
-
         }
 
         private void OnDeviceChange(InputDevice device, InputDeviceChange change)
