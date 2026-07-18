@@ -2,6 +2,7 @@
 
 namespace oojjrs.oh
 {
+    [DisallowMultipleComponent]
     public class SolidObject : MonoBehaviour
     {
         public bool IsLogDiscarded;

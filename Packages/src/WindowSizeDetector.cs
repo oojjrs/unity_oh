@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace oojjrs.oh
 {
+    [DisallowMultipleComponent]
     public class WindowSizeDetector : MonoBehaviour
     {
         public interface CallbackInterface

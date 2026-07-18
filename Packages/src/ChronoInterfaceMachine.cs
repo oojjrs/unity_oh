@@ -2,6 +2,7 @@ using System.Collections.Generic;
 
 namespace oojjrs.oh
 {
+    [UnityEngine.DisallowMultipleComponent]
     public class ChronoInterfaceMachine : SingletonMonoBehaviourT<ChronoInterfaceMachine>
     {
         public static float CurrentSpeed => (Instance != null) ? Instance.Speed : 1;

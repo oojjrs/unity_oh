@@ -4,6 +4,7 @@ using UnityEngine.SceneManagement;
 
 namespace oojjrs.oh
 {
+    [DisallowMultipleComponent]
     [RequireComponent(typeof(SolidObject))]
     public class SceneTransition : MonoBehaviour
     {

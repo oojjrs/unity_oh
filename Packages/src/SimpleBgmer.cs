@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace oojjrs.oh
 {
+    [DisallowMultipleComponent]
     [RequireComponent(typeof(AudioSource))]
     [RequireComponent(typeof(SolidObject))]
     public class SimpleBgmer : MonoBehaviour

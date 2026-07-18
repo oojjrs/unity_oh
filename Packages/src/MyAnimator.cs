@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 
+[DisallowMultipleComponent]
 [RequireComponent(typeof(Animator))]
 public class MyAnimator : MonoBehaviour
 {

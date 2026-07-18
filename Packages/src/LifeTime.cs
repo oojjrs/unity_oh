@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace oojjrs.oh
 {
+    [DisallowMultipleComponent]
     public class LifeTime : MonoBehaviour
     {
         [SerializeField]

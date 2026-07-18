@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using UnityEngine;
 
+[DisallowMultipleComponent]
 public class AutoDisabler : MonoBehaviour
 {
     [SerializeField]

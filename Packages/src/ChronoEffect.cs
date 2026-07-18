@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace oojjrs.oh
 {
+    [DisallowMultipleComponent]
     public class ChronoEffect : MonoBehaviour, ChronoInterface
     {
         private Dictionary<Animator, float> OriginalAnimatorSpeeds { get; } = new();
