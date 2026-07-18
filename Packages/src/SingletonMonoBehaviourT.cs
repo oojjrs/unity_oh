@@ -19,7 +19,8 @@ namespace oojjrs.oh
             {
                 Instance = (T)this;
 
-                Debug.Log($"{name}> Singleton Awake");
+                Debug.Log($"{name}> SINGLETON AWAKE.");
+                OnAwake();
             }
         }
 
@@ -29,8 +30,12 @@ namespace oojjrs.oh
             {
                 Instance = null;
 
-                Debug.Log($"{name}> Singleton OnDestroy");
+                Debug.Log($"{name}> SINGLETON DESTROYED.");
             }
+        }
+
+        protected virtual void OnAwake()
+        {
         }
     }
 }

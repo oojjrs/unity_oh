@@ -36,7 +36,7 @@ namespace oojjrs.oh
                 }
             }
 
-            gameObject.DestroySafety();
+            this.DestroySafety();
         }
 
         private void SaveVersion(string version)

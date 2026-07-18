@@ -29,7 +29,45 @@
 - `InputDetector`로 키보드, 마우스, 게임패드 버튼 입력 경로를 콜백에 전달
 - `DeviceDetector`로 장치 연결 상태와 현재 입력 장치를 키보드, 마우스, PlayStation, Xbox, 기타 게임패드 콜백으로 구분
 - `DevelopmentBuildPlayerPrefsResetter`로 개발 빌드의 애플리케이션 버전 변경 시 `PlayerPrefs` 초기화
+- `CoreSingleton`으로 애플리케이션 초기화, 오디오 설정, Startup 이후 진입 절차를 하나의 영구 Core에 구성
+- `ApplicationMonitor`로 Focus, Pause, Quit 생명주기를 같은 GameObject의 복수 콜백에 전달
+- `IntervalTicker`와 `OneSecondTicker`로 timeScale 반영 여부를 선택할 수 있는 반복 Tick 제공
 - 단일 동작만 허용하는 런타임 컴포넌트의 동일 GameObject 중복 부착 방지
+
+## CoreSingleton
+
+`CoreSingleton`은 Startup Scene의 `Core` GameObject에 추가하는 애플리케이션 Core이다. 같은 GameObject에 아래 컴포넌트를 자동으로 요구한다.
+
+| Component | Purpose | Execution order |
+| --- | --- | ---: |
+| `DevelopmentBuildPlayerPrefsResetter` | 개발 빌드 버전 변경 시 `PlayerPrefs` 초기화 | `-32000` |
+| `CoreSingleton` | 싱글턴 확정, 오디오 초기화, Startup 진입 절차 실행 | `-500` |
+| `ApplicationMonitor` | Focus, Pause, Quit 콜백 전달 | `-490` |
+| `SolidObject` | Scene 전환 후 Core GameObject 유지 | `0` |
+| `OneSecondTicker` | 변경할 수 없는 1초 간격 Core Tick | `0` |
+
+Core GameObject의 Receiver는 필요한 계약을 구현한다.
+
+| Interface | Purpose |
+| --- | --- |
+| `CoreSingleton.AudioInterface` | `AudioMixer`와 Master, Music, Sound 볼륨을 실제 오디오 시스템에 적용 |
+| `CoreSingleton.AudioSettingsInterface` | 저장된 오디오 볼륨과 백그라운드 재생 설정 제공 |
+| `CoreSingleton.CallbackInterface` | `OnAwakened()`, `OnInitialized()` 시점에 프로젝트 상태 반영 |
+| `CoreSingleton.EntryInterface` | `EnterCoroutine()`에서 Localization과 시스템 준비를 기다린 뒤 Startup이 아닌 다음 Scene으로 이동 |
+| `Ticker.CallbackInterface` | Core Tick 실행 가능 상태와 `OnTick()` 처리 제공 |
+| `ApplicationMonitor.*CallbackInterface` | 프로젝트에서 필요한 Focus, Pause, Quit 추가 처리 |
+
+`EntryInterface.EnterCoroutine()`은 Startup Scene을 초기화 전용 Scene으로 유지하기 위한 필수 진입 단계이다. Core는 공통 초기화와 `OnInitialized()` 호출 후 이 코루틴이 끝날 때까지 기다린다.
+
+## Ticker
+
+`Ticker`는 같은 GameObject의 `CallbackInterface`에 일정 간격으로 `OnTick()`을 전달하는 추상 기반 컴포넌트이다.
+
+- `IntervalTicker`는 Inspector에서 간격을 설정하며 기본값은 1초, 최솟값은 0.01초이다.
+- `OneSecondTicker`는 간격 설정을 노출하지 않고 항상 1초를 사용한다.
+- 두 구현 모두 `Ignore Time Scale`을 활성화하면 `Time.unscaledTime`, 비활성화하면 `Time.time`을 사용한다.
+- `IsTickable`이 거짓인 동안 경과 시간을 누적하지 않으며, 다시 참이 된 뒤 전체 간격이 지나야 다음 Tick을 호출한다.
+- 프레임 지연으로 놓친 Tick은 한 프레임에 몰아서 호출하지 않는다.
 
 ## InputDetector
 
@@ -100,7 +138,7 @@ public class DeviceDetectorReceiver : MonoBehaviour, DeviceDetector.CallbackInte
 
 `DevelopmentBuildPlayerPrefsResetter`는 개발 빌드에서 `Application.version`을 기록하고, 이전 실행에서 기록한 버전과 달라졌을 때 `PlayerPrefs.DeleteAll()`을 호출하는 일회성 컴포넌트이다.
 
-- 시작 Scene의 전용 GameObject에 추가한다. 처리가 끝나면 해당 GameObject를 제거하므로 다른 컴포넌트를 함께 추가하지 않는다.
+- 처리가 끝나면 컴포넌트 자신만 제거하므로 `CoreSingleton`과 같은 GameObject에 함께 추가할 수 있다.
 - 최초 실행에는 기존 값을 유지하고 현재 버전만 기록한다.
 - Inspector에서 `Delete On First Run`을 활성화하면 최초 실행에도 전체 값을 삭제한다.
 - Unity Editor 또는 `Debug.isDebugBuild`가 참인 빌드에서만 `PlayerPrefs`를 변경한다.
@@ -192,6 +230,7 @@ public string StateName;
 
 - Unity `6000.3`
 - Package name: `com.oojjrs.oh`
+- Package version: `1.31.0`
 
 ## 참고
 
