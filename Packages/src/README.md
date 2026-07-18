@@ -27,7 +27,9 @@
 - `MyStableEnumAttribute`로 문자열 필드에 enum 이름을 저장하는 에디터 드롭다운 제공
 - `WindowSizeDetector`로 화면 크기 변경 시 너비와 높이를 콜백에 전달
 - `InputDetector`로 키보드, 마우스, 게임패드 버튼 입력 경로를 콜백에 전달
+- `DeviceDetector`로 실제 입력 장치를 키보드·마우스, PlayStation, Xbox, 기타 게임패드 콜백으로 구분
 - `DevelopmentBuildPlayerPrefsResetter`로 개발 빌드의 애플리케이션 버전 변경 시 `PlayerPrefs` 초기화
+- 단일 동작만 허용하는 런타임 컴포넌트의 동일 GameObject 중복 부착 방지
 
 ## InputDetector
 
@@ -49,6 +51,30 @@ public class InputDetectorReceiver : MonoBehaviour, InputDetector.CallbackInterf
 
 - 콜백 구현체는 `InputDetector`와 같은 GameObject에 추가한다.
 - 게임패드 경로의 장치 이름은 `Gamepad`로 통일된다.
+- 프로젝트의 Active Input Handling은 `Input System Package (New)` 또는 `Both`로 설정해야 한다.
+
+## DeviceDetector
+
+`DeviceDetector`는 `PlayerInput` 없이 실제 입력 이벤트를 감지하고, 같은 GameObject의 단일 `CallbackInterface` 구현체에 장치별 콜백을 전달한다.
+
+```csharp
+using oojjrs.oh;
+using UnityEngine;
+
+[RequireComponent(typeof(DeviceDetector))]
+public class DeviceDetectorReceiver : MonoBehaviour, DeviceDetector.CallbackInterface
+{
+    void DeviceDetector.CallbackInterface.OnGamepadPlayStation() { }
+    void DeviceDetector.CallbackInterface.OnGamepadThirdParty() { }
+    void DeviceDetector.CallbackInterface.OnGamepadXbox() { }
+    void DeviceDetector.CallbackInterface.OnKeyboardMouse() { }
+}
+```
+
+- 콜백 구현체는 `DeviceDetector`와 같은 GameObject에 하나만 추가한다.
+- PlayStation 계열은 `DualShockGamepad`, Xbox 계열은 `XInputController` 레이아웃 상속으로 판별한다.
+- 그 밖의 `Gamepad` 레이아웃은 `OnGamepadThirdParty()`로 전달한다.
+- 입력 크기 `0.1` 이상의 실제 상태 변화만 처리하므로 장치 연결만으로는 콜백하지 않는다.
 - 프로젝트의 Active Input Handling은 `Input System Package (New)` 또는 `Both`로 설정해야 한다.
 
 ## DevelopmentBuildPlayerPrefsResetter
