@@ -138,6 +138,8 @@ namespace oojjrs.oh
 
         protected void CancelAllNamedInvokers()
         {
+            if (IsDebugLogEnabled)
+                WriteDebugLog($"Cancel all named invokers: count={NamedCoroutines.Count}.");
             var states = new List<NamedCoroutineState>(NamedCoroutines.Values);
             NamedCoroutines.Clear();
 
@@ -158,9 +160,15 @@ namespace oojjrs.oh
         protected void CancelNamedInvoker(string invokerName)
         {
             if (NamedCoroutines.Remove(invokerName, out var state) == false)
+            {
+                if (IsDebugLogEnabled)
+                    WriteDebugLog($"Named invoker cancellation ignored: name={invokerName}.");
                 return;
+            }
 
             state.IsCancellationRequested = true;
+            if (IsDebugLogEnabled)
+                WriteDebugLog($"Named invoker cancelled: name={invokerName}.");
 
             if (state.Coroutine is not null)
                 StopCoroutine(state.Coroutine);
@@ -257,6 +265,8 @@ namespace oojjrs.oh
                 if (this == null)
                     yield break;
 
+                if (IsDebugLogEnabled)
+                    WriteDebugLog($"Named invoker completed: name={invokerName}.");
                 onFinal?.Invoke();
             }
         }
@@ -264,10 +274,16 @@ namespace oojjrs.oh
         private void StartNamedCoroutine(string invokerName, IEnumerator coroutine, Action onFinal = null)
         {
             if (NamedCoroutines.ContainsKey(invokerName))
+            {
+                if (IsDebugLogEnabled)
+                    WriteDebugLog($"Named invoker registration ignored: name={invokerName}.");
                 return;
+            }
 
             var state = new NamedCoroutineState();
             NamedCoroutines.Add(invokerName, state);
+            if (IsDebugLogEnabled)
+                WriteDebugLog($"Named invoker registered: name={invokerName}, count={NamedCoroutines.Count}.");
 
             try
             {

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace oojjrs.oh
 {
@@ -12,12 +13,15 @@ namespace oojjrs.oh
         private bool State { get; set; }
         private HashSet<ChronoInterface> Values { get; } = new();
 
+        [SerializeField] private bool _debugLog;
+
         public static void Add(ChronoInterface t)
         {
             if (Instance == null)
                 return;
 
-            Instance.Values.Add(t);
+            if (Instance.Values.Add(t) && Instance._debugLog)
+                Debug.Log($"{Instance.name}> Chrono target added: type={t.GetType().Name}, count={Instance.Values.Count}.", Instance);
         }
 
         public static void Pause()
@@ -26,6 +30,9 @@ namespace oojjrs.oh
                 return;
 
             Instance.State = true;
+
+            if (Instance._debugLog)
+                Debug.Log($"{Instance.name}> Chrono paused: targets={Instance.Values.Count}.", Instance);
 
             foreach (var value in Instance.Values)
                 value.Pause();
@@ -36,7 +43,8 @@ namespace oojjrs.oh
             if (Instance == null)
                 return;
 
-            Instance.Values.Remove(t);
+            if (Instance.Values.Remove(t) && Instance._debugLog)
+                Debug.Log($"{Instance.name}> Chrono target removed: type={t.GetType().Name}, count={Instance.Values.Count}.", Instance);
         }
 
         public static void Resume()
@@ -45,6 +53,9 @@ namespace oojjrs.oh
                 return;
 
             Instance.State = false;
+
+            if (Instance._debugLog)
+                Debug.Log($"{Instance.name}> Chrono resumed: targets={Instance.Values.Count}.", Instance);
 
             foreach (var value in Instance.Values)
                 value.Resume();
@@ -56,6 +67,9 @@ namespace oojjrs.oh
                 return;
 
             Instance.Speed = speed;
+
+            if (Instance._debugLog)
+                Debug.Log($"{Instance.name}> Chrono speed changed: speed={speed}, targets={Instance.Values.Count}.", Instance);
 
             foreach (var value in Instance.Values)
                 value.SetSpeed(speed);

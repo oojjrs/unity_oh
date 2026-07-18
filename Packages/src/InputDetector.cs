@@ -12,6 +12,8 @@ namespace oojjrs.oh
             void Update(string path);
         }
 
+        [SerializeField] private bool _debugLog;
+
         private CallbackInterface _callback;
 
         private void Awake()
@@ -57,6 +59,9 @@ namespace oojjrs.oh
 
         private void UpdateCallback(string path)
         {
+            if (_debugLog)
+                Debug.Log($"{name}> {nameof(CallbackInterface.Update)}: path={path}.", this);
+
             _callback?.Update(path);
         }
     }

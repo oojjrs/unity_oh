@@ -15,6 +15,8 @@ namespace oojjrs.oh
             void Initialize(int width, int height);
         }
 
+        [SerializeField] private bool _debugLog;
+
         private CallbackInterface[] Callbacks { get; set; }
         private int CurrentHeight { get; set; }
         private int CurrentWidth { get; set; }
@@ -47,7 +49,12 @@ namespace oojjrs.oh
             CurrentWidth = Screen.width;
 
             if ((Initializer as Object) != null)
+            {
+                if (_debugLog)
+                    Debug.Log($"{name}> {nameof(InitializerInterface.Initialize)}: width={CurrentWidth}, height={CurrentHeight}.", this);
+
                 Initializer.Initialize(CurrentWidth, CurrentHeight);
+            }
 
             Started = true;
         }
@@ -61,8 +68,13 @@ namespace oojjrs.oh
 
                 if ((Screen.width != CurrentWidth) || (Screen.height != CurrentHeight))
                 {
+                    var previousHeight = CurrentHeight;
+                    var previousWidth = CurrentWidth;
                     CurrentHeight = Screen.height;
                     CurrentWidth = Screen.width;
+
+                    if (_debugLog)
+                        Debug.Log($"{name}> Window size changed: {previousWidth}x{previousHeight} -> {CurrentWidth}x{CurrentHeight}, callbacks={Callbacks.Length}.", this);
 
                     foreach (var callback in Callbacks)
                         callback.Update(CurrentWidth, CurrentHeight);

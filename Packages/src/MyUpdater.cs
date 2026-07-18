@@ -5,6 +5,10 @@ namespace oojjrs.oh
 {
     public abstract partial class MyUpdater : MonoBehaviour
     {
+        [SerializeField] private bool _debugLog;
+
+        private bool IsDebugLogEnabled => _debugLog;
+
         private float OneFrameSeconds => 0.0167f;
         protected abstract bool IsApplicationContinue { get; }
         protected bool IsApplicationQuitting { get; private set; }
@@ -21,17 +25,22 @@ namespace oojjrs.oh
         private void OnApplicationQuit()
         {
             IsApplicationQuitting = true;
+            WriteDebugLog("Application quitting.");
         }
 
         private void OnDestroy()
         {
+            WriteDebugLog("Destroyed.");
             OnDestroyed();
         }
 
         private void OnDisable()
         {
             if (IsApplicationContinue)
+            {
+                WriteDebugLog("Disabled.");
                 OnDisabled();
+            }
         }
 
         private void OnEnable()
@@ -47,11 +56,13 @@ namespace oojjrs.oh
                     yield break;
 
                 OnEnabled();
+                WriteDebugLog("Enabled.");
 
                 if (IsStartCalled == false)
                 {
                     IsStartCalled = true;
 
+                    WriteDebugLog("Started.");
                     OnStart();
                 }
 
@@ -95,5 +106,11 @@ namespace oojjrs.oh
         protected virtual void OnStart() { }
 
         protected abstract void OnUpdate();
+
+        private void WriteDebugLog(string message)
+        {
+            if (_debugLog)
+                Debug.Log($"{name}> MyUpdater: {message}", this);
+        }
     }
 }

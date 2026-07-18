@@ -11,6 +11,8 @@ namespace oojjrs.oh
     {
         private static SimpleBgmer __instance;
         [SerializeField]
+        private bool _debugLog;
+        [SerializeField]
         private float _fadeoutTimeSeconds = 1;
         [SerializeField]
         private float _intervalTimeSeconds = 3;
@@ -27,6 +29,9 @@ namespace oojjrs.oh
 
             if (__instance != null)
             {
+                if (_debugLog)
+                    Debug.Log($"{name}> Replacing BGM: previous={__instance.name}.", this);
+
                 var s = __instance.GetComponent<AudioSource>();
                 var time = Time.time;
                 if (s != null)
@@ -47,6 +52,9 @@ namespace oojjrs.oh
                 }
 
                 __instance.DestroyObjectSafety();
+
+                if (_debugLog)
+                    Debug.Log($"{name}> Previous BGM fade-out completed.", this);
             }
 
             if (this == null || audioSource == null)
@@ -54,6 +62,9 @@ namespace oojjrs.oh
 
             audioSource.Play();
             __instance = this;
+
+            if (_debugLog)
+                Debug.Log($"{name}> BGM started: clip={audioSource.clip?.name ?? "None"}, loop={audioSource.loop}.", this);
 
             if (audioSource.loop)
             {
@@ -72,11 +83,19 @@ namespace oojjrs.oh
                         yield break;
 
                     audioSource.Play();
+
+                    if (_debugLog)
+                        Debug.Log($"{name}> BGM replayed: clip={audioSource.clip.name}.", this);
                 }
             }
 
             if (this != null)
+            {
+                if (_debugLog)
+                    Debug.Log($"{name}> BGM completed and will be destroyed.", this);
+
                 gameObject.DestroySafety();
+            }
         }
     }
 }
