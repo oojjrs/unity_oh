@@ -29,7 +29,7 @@
 - `InputDetector`로 키보드, 마우스, 게임패드 버튼 입력 경로를 콜백에 전달
 - `DeviceDetector`로 장치 연결 상태와 현재 입력 장치를 키보드, 마우스, PlayStation, Xbox, 기타 게임패드 콜백으로 구분
 - `DevelopmentBuildPlayerPrefsResetter`로 개발 빌드의 애플리케이션 버전 변경 시 `PlayerPrefs` 초기화
-- `CoreSingleton`으로 애플리케이션 초기화, 오디오 설정, Startup 이후 진입 절차를 하나의 영구 Core에 구성
+- `CoreSingleton`으로 애플리케이션 초기화와 Startup 이후 진입 절차를 하나의 영구 Core에 구성
 - `ApplicationMonitor`로 Focus, Pause, Quit 생명주기를 같은 GameObject의 복수 콜백에 전달
 - `IntervalTicker`와 `OneSecondTicker`로 timeScale 반영 여부를 선택할 수 있는 반복 Tick 제공
 - 단일 동작만 허용하는 런타임 컴포넌트의 동일 GameObject 중복 부착 방지
@@ -41,7 +41,7 @@
 | Component | Purpose | Execution order |
 | --- | --- | ---: |
 | `DevelopmentBuildPlayerPrefsResetter` | 개발 빌드 버전 변경 시 `PlayerPrefs` 초기화 | `-32000` |
-| `CoreSingleton` | 싱글턴 확정, 오디오 초기화, Startup 진입 절차 실행 | `-500` |
+| `CoreSingleton` | 싱글턴 확정과 Startup 진입 절차 실행 | `-500` |
 | `ApplicationMonitor` | Focus, Pause, Quit 콜백 전달 | `-490` |
 | `SolidObject` | Scene 전환 후 Core GameObject 유지 | `0` |
 | `OneSecondTicker` | 변경할 수 없는 1초 간격 Core Tick | `0` |
@@ -50,15 +50,12 @@ Core GameObject의 Receiver는 필요한 계약을 구현한다.
 
 | Interface | Purpose |
 | --- | --- |
-| `CoreSingleton.AudioSettingsInterface` | 저장된 오디오 볼륨과 백그라운드 재생 설정 제공 |
-| `CoreSingleton.CallbackInterface` | `OnAwakened()`, `OnInitialized()` 시점에 프로젝트 상태 반영 |
+| `CoreSingleton.CallbackInterface` | `OnInitialized()` 시점에 프로젝트 상태 반영 |
 | `CoreSingleton.EntryInterface` | `EnterCoroutine()`에서 Localization과 시스템 준비를 기다린 뒤 Startup이 아닌 다음 Scene으로 이동 |
 | `Ticker.CallbackInterface` | Core Tick 실행 가능 상태와 `OnTick()` 처리 제공 |
 | `ApplicationMonitor.*CallbackInterface` | 프로젝트에서 필요한 Focus, Pause, Quit 추가 처리 |
 
 `EntryInterface.EnterCoroutine()`은 Startup Scene을 초기화 전용 Scene으로 유지하기 위한 필수 진입 단계이다. Core는 공통 초기화와 `OnInitialized()` 호출 후 이 코루틴이 끝날 때까지 기다린다.
-
-직렬화된 `AudioMixer`는 `CoreSingleton`이 직접 소유하며 `AudioSettingsInterface`에서 받은 Master, Music, Sound 볼륨을 적용한다.
 
 ## Ticker
 
@@ -231,7 +228,7 @@ public string StateName;
 
 - Unity `6000.3`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.31.2`
+- Package version: `1.31.3`
 
 ## 참고
 
