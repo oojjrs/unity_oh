@@ -1,5 +1,5 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using System.Collections;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
 
@@ -111,10 +111,94 @@ namespace oojjrs.oh
         private void BeginInitialization()
         {
             if (_initializationCoroutine == null)
-                _initializationCoroutine = StartCoroutine(InitializeAfterOneFrame());
+                _initializationCoroutine = StartCoroutine(InitializeAfterOneFrameCoroutine());
         }
 
-        private IEnumerator InitializeAfterOneFrame()
+        private int CountDevices(DeviceEnum deviceEnum, InputDevice excludedDevice = null)
+        {
+            var deviceCount = 0;
+
+            foreach (var device in InputSystem.devices)
+            {
+                if (device == excludedDevice)
+                    continue;
+
+                if (GetDeviceEnum(device) == deviceEnum)
+                    ++deviceCount;
+            }
+
+            return deviceCount;
+        }
+
+        private int CountGamepads(InputDevice excludedDevice = null)
+        {
+            var gamepadCount = 0;
+
+            foreach (var device in InputSystem.devices)
+            {
+                if (device == excludedDevice)
+                    continue;
+
+                if (device is Gamepad)
+                    ++gamepadCount;
+            }
+
+            return gamepadCount;
+        }
+
+        private DeviceEnum? GetDeviceEnum(InputDevice device)
+        {
+            if (device is Gamepad gamepad)
+                return GetGamepadDeviceEnum(gamepad);
+
+            if (device is Keyboard)
+                return DeviceEnum.Keyboard;
+
+            if (device is Mouse)
+                return DeviceEnum.Mouse;
+
+            return null;
+        }
+
+        private DeviceEnum GetGamepadDeviceEnum(Gamepad gamepad)
+        {
+            if (InputSystem.IsFirstLayoutBasedOnSecond(gamepad.layout, "DualShockGamepad"))
+                return DeviceEnum.GamepadPlayStation;
+
+            if (InputSystem.IsFirstLayoutBasedOnSecond(gamepad.layout, "XInputController"))
+                return DeviceEnum.GamepadXbox;
+
+            return DeviceEnum.GamepadThirdParty;
+        }
+
+        private string GetInputDeviceDebugName(InputDevice device)
+        {
+            return $"{device.displayName}({device.layout}, id={device.deviceId})";
+        }
+
+        private bool HasKeyboard()
+        {
+            foreach (var device in InputSystem.devices)
+            {
+                if (device is Keyboard)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private bool HasMouse()
+        {
+            foreach (var device in InputSystem.devices)
+            {
+                if (device is Mouse)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private IEnumerator InitializeAfterOneFrameCoroutine()
         {
             yield return null;
 
@@ -143,6 +227,66 @@ namespace oojjrs.oh
                 LogCallback(nameof(CallbackInterface.OnMouseUnavailable));
                 _callback.OnMouseUnavailable();
             }
+        }
+
+        private bool IsMouseMoveControl(InputControl control, Mouse mouse)
+        {
+            while ((control != null) && (control != mouse))
+            {
+                if ((control == mouse.delta) || (control == mouse.position))
+                    return true;
+
+                control = control.parent;
+            }
+
+            return false;
+        }
+
+        private bool IsSupportedKey(UnityEngine.InputSystem.Controls.KeyControl key)
+        {
+            return key.keyCode switch
+            {
+                >= Key.Space and <= Key.Digit0 => true,
+                >= Key.LeftShift and <= Key.RightCtrl => true,
+                >= Key.Escape and <= Key.NumLock => true,
+                >= Key.NumpadEnter and <= Key.Numpad9 => true,
+                >= Key.F1 and <= Key.F12 => true,
+                _ => false,
+            };
+        }
+
+        private void LogCallback(string callbackName)
+        {
+            if (_debugLog)
+                Debug.Log($"{name}> {callbackName}.", this);
+        }
+
+        private void NotifyConnectedDevices()
+        {
+            foreach (var device in InputSystem.devices)
+            {
+                var deviceEnum = GetDeviceEnum(device);
+                if (deviceEnum.HasValue == false)
+                    continue;
+
+                NotifyDeviceConnected(deviceEnum.Value, device);
+            }
+        }
+
+        private void NotifyDeviceConnected(DeviceEnum deviceEnum, InputDevice device)
+        {
+            if (_debugLog)
+                Debug.Log($"{name}> {nameof(CallbackInterface.OnDeviceConnected)}: device={deviceEnum}, input={GetInputDeviceDebugName(device)}.", this);
+
+            _callback.OnDeviceConnected(deviceEnum);
+        }
+
+        private void NotifyDeviceDisconnected(DeviceEnum deviceEnum, int deviceCount, int gamepadCount, InputDevice device)
+        {
+            if (_debugLog)
+                Debug.Log($"{name}> {nameof(CallbackInterface.OnDeviceDisconnected)}: device={deviceEnum}, deviceCount={deviceCount}, gamepadCount={gamepadCount}, input={GetInputDeviceDebugName(device)}.", this);
+
+            _callback.OnDeviceDisconnected(deviceEnum, deviceCount, gamepadCount);
         }
 
         private void OnDeviceChange(InputDevice device, InputDeviceChange change)
@@ -264,144 +408,13 @@ namespace oojjrs.oh
 
             foreach (var control in inputEvent.EnumerateChangedControls(mouse, ActivationMagnitudeThreshold))
             {
-                if ((control != mouse.delta) && (control != mouse.position))
+                if (IsMouseMoveControl(control, mouse) == false)
                     continue;
 
                 UpdateCurrentDevice(mouse, DeviceEnum.Mouse);
                 LogCallback(nameof(CallbackInterface.OnMouseMove));
                 _mouseMoveCallback();
                 break;
-            }
-        }
-
-        private DeviceEnum? GetDeviceEnum(InputDevice device)
-        {
-            if (device is Gamepad gamepad)
-                return GetGamepadDeviceEnum(gamepad);
-
-            if (device is Keyboard)
-                return DeviceEnum.Keyboard;
-
-            if (device is Mouse)
-                return DeviceEnum.Mouse;
-
-            return null;
-        }
-
-        private DeviceEnum GetGamepadDeviceEnum(Gamepad gamepad)
-        {
-            if (InputSystem.IsFirstLayoutBasedOnSecond(gamepad.layout, "DualShockGamepad"))
-                return DeviceEnum.GamepadPlayStation;
-
-            if (InputSystem.IsFirstLayoutBasedOnSecond(gamepad.layout, "XInputController"))
-                return DeviceEnum.GamepadXbox;
-
-            return DeviceEnum.GamepadThirdParty;
-        }
-
-        private bool HasKeyboard()
-        {
-            foreach (var device in InputSystem.devices)
-            {
-                if (device is Keyboard)
-                    return true;
-            }
-
-            return false;
-        }
-
-        private int CountGamepads(InputDevice excludedDevice = null)
-        {
-            var gamepadCount = 0;
-
-            foreach (var device in InputSystem.devices)
-            {
-                if (device == excludedDevice)
-                    continue;
-
-                if (device is Gamepad)
-                    ++gamepadCount;
-            }
-
-            return gamepadCount;
-        }
-
-        private int CountDevices(DeviceEnum deviceEnum, InputDevice excludedDevice = null)
-        {
-            var deviceCount = 0;
-
-            foreach (var device in InputSystem.devices)
-            {
-                if (device == excludedDevice)
-                    continue;
-
-                if (GetDeviceEnum(device) == deviceEnum)
-                    ++deviceCount;
-            }
-
-            return deviceCount;
-        }
-
-        private bool HasMouse()
-        {
-            foreach (var device in InputSystem.devices)
-            {
-                if (device is Mouse)
-                    return true;
-            }
-
-            return false;
-        }
-
-        private bool IsSupportedKey(UnityEngine.InputSystem.Controls.KeyControl key)
-        {
-            return key.keyCode switch
-            {
-                >= Key.Space and <= Key.Digit0 => true,
-                >= Key.LeftShift and <= Key.RightCtrl => true,
-                >= Key.Escape and <= Key.NumLock => true,
-                >= Key.NumpadEnter and <= Key.Numpad9 => true,
-                >= Key.F1 and <= Key.F12 => true,
-                _ => false,
-            };
-        }
-
-        private string GetInputDeviceDebugName(InputDevice device)
-        {
-            return $"{device.displayName}({device.layout}, id={device.deviceId})";
-        }
-
-        private void LogCallback(string callbackName)
-        {
-            if (_debugLog)
-                Debug.Log($"{name}> {callbackName}.", this);
-        }
-
-        private void NotifyDeviceConnected(DeviceEnum deviceEnum, InputDevice device)
-        {
-            if (_debugLog)
-                Debug.Log($"{name}> {nameof(CallbackInterface.OnDeviceConnected)}: device={deviceEnum}, input={GetInputDeviceDebugName(device)}.", this);
-
-            _callback.OnDeviceConnected(deviceEnum);
-        }
-
-        private void NotifyDeviceDisconnected(DeviceEnum deviceEnum, int deviceCount, int gamepadCount, InputDevice device)
-        {
-            if (_debugLog)
-                Debug.Log($"{name}> {nameof(CallbackInterface.OnDeviceDisconnected)}: device={deviceEnum}, deviceCount={deviceCount}, gamepadCount={gamepadCount}, input={GetInputDeviceDebugName(device)}.", this);
-
-            _callback.OnDeviceDisconnected(deviceEnum, deviceCount, gamepadCount);
-        }
-
-        private void NotifyConnectedDevices()
-        {
-            foreach (var device in InputSystem.devices)
-            {
-                var deviceEnum = GetDeviceEnum(device);
-                if (deviceEnum.HasValue == false)
-                    continue;
-
-                NotifyDeviceConnected(deviceEnum.Value, device);
             }
         }
 
