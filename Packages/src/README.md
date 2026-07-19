@@ -27,7 +27,7 @@
 - `MyStableEnumAttribute`로 문자열 필드에 enum 이름을 저장하는 에디터 드롭다운 제공
 - `WindowSizeDetector`로 화면 크기 변경 시 너비와 높이를 콜백에 전달
 - `InputDetector`로 키보드, 마우스, 게임패드 버튼 입력 경로를 콜백에 전달
-- `DeviceDetector`로 장치 연결 상태와 현재 입력 장치를 키보드, 마우스, PlayStation, Xbox, 기타 게임패드 콜백으로 구분
+- `DeviceDetector`로 장치 연결 상태와 현재 입력 장치를 키보드, 마우스, PlayStation, Xbox, 기타 게임패드 `DeviceEnum`으로 구분
 - `DevelopmentBuildPlayerPrefsResetter`로 개발 빌드의 애플리케이션 버전 변경 시 `PlayerPrefs` 초기화
 - `CoreSingleton`으로 애플리케이션 초기화와 Startup 이후 진입 절차를 하나의 영구 Core에 구성
 - `ApplicationMonitor`로 Focus, Pause, Quit 생명주기를 같은 GameObject의 복수 콜백에 전달
@@ -100,34 +100,49 @@ using UnityEngine;
 [RequireComponent(typeof(DeviceDetector))]
 public class DeviceDetectorReceiver : MonoBehaviour, DeviceDetector.CallbackInterface
 {
-    void DeviceDetector.CallbackInterface.OnCurrentDeviceChanged(DeviceDetector.DeviceEnum? previousDevice, DeviceDetector.DeviceEnum currentDevice) { }
-    void DeviceDetector.CallbackInterface.OnDeviceConnected(DeviceDetector.DeviceEnum device) { }
-    void DeviceDetector.CallbackInterface.OnDeviceDisconnected(DeviceDetector.DeviceEnum device, int deviceCount, int gamepadCount) { }
-    void DeviceDetector.CallbackInterface.OnGamepadInput(DeviceDetector.DeviceEnum gamepad) { }
-    void DeviceDetector.CallbackInterface.OnKeyboardExtendedInput() { }
-    void DeviceDetector.CallbackInterface.OnKeyboardInput() { }
-    void DeviceDetector.CallbackInterface.OnKeyboardUnavailable() { }
-    void DeviceDetector.CallbackInterface.OnMouseButtonInput() { }
-    void DeviceDetector.CallbackInterface.OnMouseMove() { }
-    void DeviceDetector.CallbackInterface.OnMouseUnavailable() { }
+    void DeviceDetector.CallbackInterface.OnCurrentDeviceChanged(DeviceDetector.DeviceEnum? previousDevice, DeviceDetector.DeviceEnum currentDevice)
+    {
+    }
+
+    void DeviceDetector.CallbackInterface.OnDeviceConnected(DeviceDetector.DeviceEnum device, int deviceCount)
+    {
+    }
+
+    void DeviceDetector.CallbackInterface.OnDeviceDisconnected(DeviceDetector.DeviceEnum device, int deviceCount)
+    {
+    }
+
+    void DeviceDetector.CallbackInterface.OnDeviceInitialized(DeviceDetector.DeviceEnum device, int deviceCount)
+    {
+    }
+
+    void DeviceDetector.CallbackInterface.OnKeyboardExtendedInput()
+    {
+    }
+
+    void DeviceDetector.CallbackInterface.OnMouseMove()
+    {
+    }
 }
 ```
 
 - 콜백 구현체는 `DeviceDetector`와 같은 GameObject에 하나만 추가한다.
-- 사용자 컴포넌트의 `Start()`가 끝난 다음 프레임에 연결된 물리 장치를 `OnDeviceConnected()`로 전달한다. 대기 중 비활성화되면 초기화 코루틴을 취소하고, 초기화 전에 다시 활성화되면 다음 프레임 초기화를 재예약한다. 키보드나 마우스가 없으면 각 전용 콜백으로 초기 상태를 알리고, 초기 스냅샷 전에는 입력 콜백을 호출하지 않는다.
-- 초기화 이후에는 물리 장치가 연결되거나 해제될 때마다 `OnDeviceConnected()`와 `OnDeviceDisconnected()`를 호출한다. 연결 콜백에는 새로 연결된 장치 종류만 전달한다. 해제 콜백의 `deviceCount`에는 변경 후 같은 `DeviceEnum` 장치 수를, `gamepadCount`에는 변경 후 전체 게임패드 수를 전달한다.
-- 입력으로 현재 물리 장치가 바뀌면 `OnCurrentDeviceChanged()`에 이전 장치 종류와 현재 장치 종류를 전달한 뒤 해당 입력 종류 콜백을 호출한다.
+- `DeviceDetector.Start()`에서 다섯 `DeviceEnum` 각각의 연결 수를 `OnDeviceInitialized()`로 즉시 한 번씩 전달한다. 연결 수가 0인 종류도 포함하므로 이 스냅샷만으로 최초 장치 상태를 구성할 수 있다.
+- 초기화 이후 비활성화했다가 다시 활성화한 경우에는 `OnEnable()`에서 전체 장치 수 스냅샷을 즉시 다시 전달해 구독하지 않은 동안의 변화를 재동기화한다.
+- 초기화 이후에는 물리 장치가 연결되거나 해제될 때마다 `OnDeviceConnected()`와 `OnDeviceDisconnected()`를 호출한다. 두 콜백의 `deviceCount`에는 변경 후 같은 `DeviceEnum` 장치 수를 전달한다.
+- 장치 연결·해제 때 `OnMouseMove()`와 `OnKeyboardExtendedInput()`의 1회 전달 상태도 초기화해 이후 특수 입력을 다시 받을 수 있게 한다.
+- 사용자는 초기 스냅샷과 연결·해제 콜백의 `deviceCount`를 종류별로 보관해 장치 사용 가능 여부를 판단하고, 세 게임패드 종류의 수를 합산해 전체 게임패드 수를 계산할 수 있다.
+- 입력으로 현재 물리 장치가 바뀌면 `OnCurrentDeviceChanged()`에 이전 장치 종류와 현재 장치 종류를 전달한다. 일반 게임패드 입력, 허용된 표준 키 입력, 마우스 버튼 입력은 이 콜백으로 통합하며 별도의 입력 종류 콜백을 중복 호출하지 않는다.
+- 장치 연결·해제, `OnKeyboardExtendedInput()`, 현재 장치 콜백 없이 단독으로 전달된 `OnMouseMove()` 뒤에는 사용자 측 표시 상태가 달라질 수 있으므로 다음 일반 입력에서 현재 물리 장치가 같더라도 `OnCurrentDeviceChanged()`를 한 번 호출해 다시 동기화한다. 이 경우와 같은 종류의 다른 물리 장치로 바뀐 경우에는 이전·현재 `DeviceEnum`이 같을 수 있다.
 - 공개 API에는 Unity Input System의 `InputDevice`를 노출하지 않고 패키지 자체 `DeviceEnum`만 사용한다.
 - PlayStation 계열은 `DualShockGamepad`, Xbox 계열은 `XInputController` 레이아웃 상속으로 판별한다.
-- 게임패드 입력은 `OnGamepadInput()` 하나로 전달하며 인자의 `DeviceEnum`으로 PlayStation, Xbox, 기타 계열을 구분한다.
-- 키보드 입력은 `OnKeyboardInput()`으로 전달한다.
-- 마우스의 `delta`·`position`과 그 하위 축 변화를 `OnMouseMove()`로 전달해 커서 표시만 처리할 수 있고, 같은 마우스의 첫 버튼 입력은 `OnMouseButtonInput()`으로 따로 전달해 UI 표시 전환을 처리할 수 있다.
-- 패드나 키보드로 현재 장치가 바뀌면 마우스 버튼 활성 상태를 초기화하며, 다시 마우스를 움직인 뒤 버튼을 누를 때 같은 순서로 콜백한다.
-- 키보드와 마우스의 사용 가능 상태를 각각 추적하고, 없어지면 `OnKeyboardUnavailable()`과 `OnMouseUnavailable()`을 따로 호출한다.
+- 게임패드 입력은 `OnCurrentDeviceChanged()`의 `DeviceEnum`으로 PlayStation, Xbox, 기타 계열을 구분한다.
+- 마우스의 `delta`·`position`과 그 하위 축 변화는 현재 장치를 바꾸지 않고 `OnMouseMove()`로 한 번만 전달하므로 커서 표시만 따로 처리할 수 있다. 마우스 버튼을 누르면 별도 버튼 콜백 없이 현재 장치를 `Mouse`로 바꾸며, 버튼과 이동이 같은 이벤트에 있고 현재 장치 콜백이 필요한 경우에는 이를 먼저 전달한 뒤 이동 콜백을 전달한다.
+- `OnMouseMove()` 뒤에 표준 키나 게임패드 입력이 들어오면 같은 물리 장치여도 현재 장치 콜백을 한 번 전달하고 마우스 이동 감지 상태를 초기화하므로, 다음 마우스 이동을 다시 받을 수 있다.
 - 일반 문자·숫자·기호, Ctrl·Alt·Shift, 탐색키, CapsLock·NumLock, 숫자 패드, F1~F12만 키보드 전환 입력으로 허용한다.
 - PrintScreen·ScrollLock·Pause, Meta·Windows, ContextMenu, OEM, F13~F24, 미디어·IME 키와 이후 추가되는 미분류 키는 `OnKeyboardExtendedInput()`으로 한 번만 전달하되 현재 장치를 키보드로 바꾸지 않는다. 일반 키나 다른 장치 입력이 들어오거나 키보드가 해제되면 다시 호출할 수 있게 초기화한다.
-- 입력 크기 `0.1` 이상의 실제 상태 변화만 처리하므로 장치 연결만으로는 콜백하지 않는다.
-- Inspector의 `Debug Log`를 켜면 컴포넌트 활성화 상태, 공개 콜백 호출, 장치 종류와 레이아웃·ID, 변경 후 게임패드 수, 현재 장치 전환을 추적할 수 있다. 기본값은 꺼짐이며 입력 이벤트가 무시되는 핫패스에는 로그를 남기지 않는다.
+- 입력 크기 `0.1` 이상의 실제 상태 변화만 현재 장치 전환으로 처리하므로 장치 연결만으로는 `OnCurrentDeviceChanged()`를 호출하지 않는다.
+- Inspector의 `Debug Log`를 켜면 컴포넌트 활성화 상태, 공개 콜백 호출, 장치 종류와 레이아웃·ID, 종류별 변경 후 장치 수, 현재 장치 전환을 추적할 수 있다. 기본값은 꺼짐이며 입력 이벤트가 무시되는 핫패스에는 로그를 남기지 않는다.
 - `InputDetector`, `WindowSizeDetector`, `MyUpdater`, `ChronoInterfaceMachine`, `SimpleBgmer`, `AutoDisabler`, `LifeTime`도 Inspector의 `Debug Log`를 켰을 때만 입력 전달, 상태 전환, 예약·취소·완료 같은 상세 진단 로그를 출력한다.
 - 씬 전환, Singleton 수명, 영구 오브젝트 존속, 개발 빌드 데이터 초기화처럼 시스템 흐름 복원에 필요한 기존 로그와 모든 경고는 디버그 설정과 관계없이 항상 출력한다.
 - 프로젝트의 Active Input Handling은 `Input System Package (New)` 또는 `Both`로 설정해야 한다.
@@ -228,7 +243,7 @@ public string StateName;
 
 - Unity `6000.3`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.31.6`
+- Package version: `1.32.0`
 
 ## 참고
 
