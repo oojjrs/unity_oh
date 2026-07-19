@@ -100,7 +100,7 @@ using UnityEngine;
 [RequireComponent(typeof(DeviceDetector))]
 public class DeviceDetectorReceiver : MonoBehaviour, DeviceDetector.CallbackInterface
 {
-    void DeviceDetector.CallbackInterface.OnCurrentDeviceChanged(DeviceDetector.DeviceEnum? previousDevice, DeviceDetector.DeviceEnum currentDevice)
+    void DeviceDetector.CallbackInterface.OnCurrentDeviceChanged(DeviceDetector.DeviceEnum? previousDevice, DeviceDetector.DeviceEnum? currentDevice)
     {
     }
 
@@ -128,12 +128,18 @@ public class DeviceDetectorReceiver : MonoBehaviour, DeviceDetector.CallbackInte
 
 - 콜백 구현체는 `DeviceDetector`와 같은 GameObject에 하나만 추가한다.
 - `DeviceDetector.Start()`에서 다섯 `DeviceEnum` 각각의 연결 수를 `OnDeviceInitialized()`로 즉시 한 번씩 전달한다. 연결 수가 0인 종류도 포함하므로 이 스냅샷만으로 최초 장치 상태를 구성할 수 있다.
-- 초기화 이후 비활성화했다가 다시 활성화한 경우에는 `OnEnable()`에서 전체 장치 수 스냅샷을 즉시 다시 전달해 구독하지 않은 동안의 변화를 재동기화한다.
+- 초기 스냅샷 뒤에는 Xbox, PlayStation, 기타 게임패드, 키보드, 마우스 순서로 현재 물리 장치를 선택해 `OnCurrentDeviceChanged()`로 전달한다. 지원 장치가 하나도 없으면 이전·현재 장치를 모두 `null`로 전달한다.
+- 초기화 이후 비활성화했다가 다시 활성화한 경우에는 `OnEnable()`에서 전체 장치 수 스냅샷과 현재 장치를 즉시 다시 전달해 구독하지 않은 동안의 변화를 재동기화한다.
 - 초기화 이후에는 물리 장치가 연결되거나 해제될 때마다 `OnDeviceConnected()`와 `OnDeviceDisconnected()`를 호출한다. 두 콜백의 `deviceCount`에는 변경 후 같은 `DeviceEnum` 장치 수를 전달한다.
+- 장치가 연결되면 `OnDeviceConnected()`를 먼저 호출한 뒤 새로 연결된 물리 장치를 현재 장치로 설정하고 `OnCurrentDeviceChanged()`를 호출한다.
+- 현재 물리 장치가 해제되면 `OnDeviceDisconnected()`를 먼저 호출한 뒤 대체 장치를 선택해 `OnCurrentDeviceChanged()`를 호출한다. 현재 장치가 아닌 물리 장치의 해제는 현재 장치를 바꾸지 않는다.
+- 게임패드의 대체 장치는 같은 종류, Xbox, PlayStation, 기타 게임패드, 키보드, 마우스 순서로 찾되 이미 확인한 같은 종류는 건너뛴다.
+- 키보드의 대체 장치는 같은 키보드, 마우스, Xbox, PlayStation, 기타 게임패드 순서로 찾고, 마우스는 같은 마우스, 키보드, Xbox, PlayStation, 기타 게임패드 순서로 찾는다.
+- 같은 `DeviceEnum`의 다른 물리 장치로 전환하면 이전·현재 장치 종류가 같은 `OnCurrentDeviceChanged()`를 호출하며, 남은 지원 장치가 없으면 현재 장치를 `null`로 전달한다.
 - 장치 연결·해제 때 `OnMouseMove()`와 `OnKeyboardExtendedInput()`의 1회 전달 상태도 초기화해 이후 특수 입력을 다시 받을 수 있게 한다.
 - 사용자는 초기 스냅샷과 연결·해제 콜백의 `deviceCount`를 종류별로 보관해 장치 사용 가능 여부를 판단하고, 세 게임패드 종류의 수를 합산해 전체 게임패드 수를 계산할 수 있다.
 - 입력으로 현재 물리 장치가 바뀌면 `OnCurrentDeviceChanged()`에 이전 장치 종류와 현재 장치 종류를 전달한다. 일반 게임패드 입력, 허용된 표준 키 입력, 마우스 버튼 입력은 이 콜백으로 통합하며 별도의 입력 종류 콜백을 중복 호출하지 않는다.
-- 장치 연결·해제, `OnKeyboardExtendedInput()`, 현재 장치 콜백 없이 단독으로 전달된 `OnMouseMove()` 뒤에는 사용자 측 표시 상태가 달라질 수 있으므로 다음 일반 입력에서 현재 물리 장치가 같더라도 `OnCurrentDeviceChanged()`를 한 번 호출해 다시 동기화한다. 이 경우와 같은 종류의 다른 물리 장치로 바뀐 경우에는 이전·현재 `DeviceEnum`이 같을 수 있다.
+- `OnKeyboardExtendedInput()`이나 현재 장치 콜백 없이 단독으로 전달된 `OnMouseMove()` 뒤에는 다음 일반 입력에서 현재 물리 장치가 같더라도 `OnCurrentDeviceChanged()`를 한 번 호출해 사용자 측 표시 상태를 다시 동기화한다.
 - 공개 API에는 Unity Input System의 `InputDevice`를 노출하지 않고 패키지 자체 `DeviceEnum`만 사용한다.
 - PlayStation 계열은 `DualShockGamepad`, Xbox 계열은 `XInputController` 레이아웃 상속으로 판별한다.
 - 게임패드 입력은 `OnCurrentDeviceChanged()`의 `DeviceEnum`으로 PlayStation, Xbox, 기타 계열을 구분한다.
@@ -141,7 +147,7 @@ public class DeviceDetectorReceiver : MonoBehaviour, DeviceDetector.CallbackInte
 - `OnMouseMove()` 뒤에 표준 키나 게임패드 입력이 들어오면 같은 물리 장치여도 현재 장치 콜백을 한 번 전달하고 마우스 이동 감지 상태를 초기화하므로, 다음 마우스 이동을 다시 받을 수 있다.
 - 일반 문자·숫자·기호, Ctrl·Alt·Shift, 탐색키, CapsLock·NumLock, 숫자 패드, F1~F12만 키보드 전환 입력으로 허용한다.
 - PrintScreen·ScrollLock·Pause, Meta·Windows, ContextMenu, OEM, F13~F24, 미디어·IME 키와 이후 추가되는 미분류 키는 `OnKeyboardExtendedInput()`으로 한 번만 전달하되 현재 장치를 키보드로 바꾸지 않는다. 일반 키나 다른 장치 입력이 들어오거나 키보드가 해제되면 다시 호출할 수 있게 초기화한다.
-- 입력 크기 `0.1` 이상의 실제 상태 변화만 현재 장치 전환으로 처리하므로 장치 연결만으로는 `OnCurrentDeviceChanged()`를 호출하지 않는다.
+- 입력으로 현재 장치를 전환할 때는 입력 크기 `0.1` 이상의 실제 상태 변화만 처리하며, 장치 연결은 입력 여부와 관계없이 새 장치로 즉시 전환한다.
 - Inspector의 `Debug Log`를 켜면 컴포넌트 활성화 상태, 공개 콜백 호출, 장치 종류와 레이아웃·ID, 종류별 변경 후 장치 수, 현재 장치 전환을 추적할 수 있다. 기본값은 꺼짐이며 입력 이벤트가 무시되는 핫패스에는 로그를 남기지 않는다.
 - `InputDetector`, `WindowSizeDetector`, `MyUpdater`, `ChronoInterfaceMachine`, `SimpleBgmer`, `AutoDisabler`, `LifeTime`도 Inspector의 `Debug Log`를 켰을 때만 입력 전달, 상태 전환, 예약·취소·완료 같은 상세 진단 로그를 출력한다.
 - 씬 전환, Singleton 수명, 영구 오브젝트 존속, 개발 빌드 데이터 초기화처럼 시스템 흐름 복원에 필요한 기존 로그와 모든 경고는 디버그 설정과 관계없이 항상 출력한다.
@@ -243,7 +249,7 @@ public string StateName;
 
 - Unity `6000.3`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.32.0`
+- Package version: `1.33.0`
 
 ## 참고
 
