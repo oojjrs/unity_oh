@@ -18,7 +18,7 @@ namespace oojjrs.oh
 
         public interface CallbackInterface
         {
-            void OnCurrentDeviceChanged(DeviceEnum? previousDevice, DeviceEnum currentDevice);
+            void OnCurrentDeviceChanged(DeviceEnum? previousDevice, DeviceEnum? currentDevice);
             void OnDeviceConnected(DeviceEnum device, int deviceCount);
             void OnDeviceDisconnected(DeviceEnum device, int deviceCount);
             void OnDeviceInitialized(DeviceEnum device, int deviceCount);
@@ -112,6 +112,9 @@ namespace oojjrs.oh
                 if (_started == false)
                     return;
             }
+
+            var currentDevice = GetFallbackDevice(null);
+            UpdateCurrentDevice(currentDevice, GetDeviceEnum(currentDevice));
         }
 
         private DeviceEnum? GetDeviceEnum(InputDevice device)
@@ -136,6 +139,33 @@ namespace oojjrs.oh
             return null;
         }
 
+        private InputDevice GetFallbackDevice(DeviceEnum? previousDevice, InputDevice excludedDevice = null)
+        {
+            return previousDevice switch
+            {
+                DeviceEnum.GamepadPlayStation => GetDevice(DeviceEnum.GamepadPlayStation) ?? GetDevice(DeviceEnum.GamepadXbox) ?? GetDevice(DeviceEnum.GamepadThirdParty) ?? GetDevice(DeviceEnum.Keyboard) ?? GetDevice(DeviceEnum.Mouse),
+                DeviceEnum.GamepadThirdParty => GetDevice(DeviceEnum.GamepadThirdParty) ?? GetDevice(DeviceEnum.GamepadXbox) ?? GetDevice(DeviceEnum.GamepadPlayStation) ?? GetDevice(DeviceEnum.Keyboard) ?? GetDevice(DeviceEnum.Mouse),
+                DeviceEnum.GamepadXbox => GetDevice(DeviceEnum.GamepadXbox) ?? GetDevice(DeviceEnum.GamepadPlayStation) ?? GetDevice(DeviceEnum.GamepadThirdParty) ?? GetDevice(DeviceEnum.Keyboard) ?? GetDevice(DeviceEnum.Mouse),
+                DeviceEnum.Keyboard => GetDevice(DeviceEnum.Keyboard) ?? GetDevice(DeviceEnum.Mouse) ?? GetDevice(DeviceEnum.GamepadXbox) ?? GetDevice(DeviceEnum.GamepadPlayStation) ?? GetDevice(DeviceEnum.GamepadThirdParty),
+                DeviceEnum.Mouse => GetDevice(DeviceEnum.Mouse) ?? GetDevice(DeviceEnum.Keyboard) ?? GetDevice(DeviceEnum.GamepadXbox) ?? GetDevice(DeviceEnum.GamepadPlayStation) ?? GetDevice(DeviceEnum.GamepadThirdParty),
+                _ => GetDevice(DeviceEnum.GamepadXbox) ?? GetDevice(DeviceEnum.GamepadPlayStation) ?? GetDevice(DeviceEnum.GamepadThirdParty) ?? GetDevice(DeviceEnum.Keyboard) ?? GetDevice(DeviceEnum.Mouse),
+            };
+
+            InputDevice GetDevice(DeviceEnum deviceType)
+            {
+                foreach (var device in InputSystem.devices)
+                {
+                    if (device == excludedDevice)
+                        continue;
+
+                    if (GetDeviceEnum(device) == deviceType)
+                        return device;
+                }
+
+                return null;
+            }
+        }
+
         private string GetInputDeviceDebugName(InputDevice device)
         {
             return $"{device.displayName} ({device.layout}, ID : {device.deviceId})";
@@ -152,7 +182,6 @@ namespace oojjrs.oh
                 if (deviceType.HasValue)
                 {
                     var deviceCount = ++DeviceCounts[(int)deviceType.Value];
-                    _currentDeviceNotificationRequired = true;
                     _keyboardExtendedInputActivated = false;
                     _mouseMoveInputActivated = false;
 
@@ -160,11 +189,20 @@ namespace oojjrs.oh
                         Debug.Log($"{name}> {nameof(CallbackInterface.OnDeviceConnected)} : {deviceType.Value}, DEVICE COUNT : {deviceCount}, INPUT : {GetInputDeviceDebugName(device)}.", this);
 
                     _callback.OnDeviceConnected(deviceType.Value, deviceCount);
+
+                    if (this == null)
+                        return;
+
+                    if ((_started == false) || (isActiveAndEnabled == false) || ((_callback as Object) == null))
+                        return;
+
+                    UpdateCurrentDevice(device, deviceType.Value);
                 }
             }
             else if (change == InputDeviceChange.Removed)
             {
                 var deviceType = GetDeviceEnum(device);
+                var currentDeviceRemoved = device == _currentDevice;
                 var deviceCount = 0;
                 if (deviceType.HasValue)
                 {
@@ -173,16 +211,12 @@ namespace oojjrs.oh
                         --DeviceCounts[deviceIndex];
 
                     deviceCount = DeviceCounts[deviceIndex];
-                    _currentDeviceNotificationRequired = true;
                 }
 
-                if (device == _currentDevice)
+                if (currentDeviceRemoved)
                 {
                     if (_debugLog)
                         Debug.Log($"{name}> CURRENT PHYSICAL DEVICE REMOVED : {deviceType?.ToString() ?? "UNKNOWN"}, INPUT : {GetInputDeviceDebugName(device)}.", this);
-
-                    _currentDevice = null;
-                    _currentDeviceType = null;
                 }
 
                 if (deviceType.HasValue)
@@ -195,6 +229,18 @@ namespace oojjrs.oh
 
                     _callback.OnDeviceDisconnected(deviceType.Value, deviceCount);
                 }
+
+                if (currentDeviceRemoved == false)
+                    return;
+
+                if (this == null)
+                    return;
+
+                if ((_started == false) || (isActiveAndEnabled == false) || ((_callback as Object) == null))
+                    return;
+
+                var currentDevice = GetFallbackDevice(_currentDeviceType, device);
+                UpdateCurrentDevice(currentDevice, GetDeviceEnum(currentDevice));
             }
         }
 
@@ -349,26 +395,26 @@ namespace oojjrs.oh
                 UpdateCurrentDevice(device, deviceType.Value);
                 break;
             }
+        }
 
-            void UpdateCurrentDevice(InputDevice device, DeviceEnum deviceType)
-            {
-                var previousDevice = _currentDeviceType;
+        private void UpdateCurrentDevice(InputDevice device, DeviceEnum? deviceType)
+        {
+            var previousDevice = _currentDeviceType;
 
-                _currentDevice = device;
-                _currentDeviceNotificationRequired = false;
-                _currentDeviceType = deviceType;
+            _currentDevice = device;
+            _currentDeviceNotificationRequired = false;
+            _currentDeviceType = deviceType;
 
-                if (_currentDeviceType != DeviceEnum.Keyboard)
-                    _keyboardExtendedInputActivated = false;
+            if (_currentDeviceType != DeviceEnum.Keyboard)
+                _keyboardExtendedInputActivated = false;
 
-                if (_currentDeviceType != DeviceEnum.Mouse)
-                    _mouseMoveInputActivated = false;
+            if (_currentDeviceType != DeviceEnum.Mouse)
+                _mouseMoveInputActivated = false;
 
-                if (_debugLog)
-                    Debug.Log($"{name}> {nameof(CallbackInterface.OnCurrentDeviceChanged)} : {previousDevice?.ToString() ?? "NONE"} -> {_currentDeviceType.Value}, INPUT : {GetInputDeviceDebugName(device)}.", this);
+            if (_debugLog)
+                Debug.Log($"{name}> {nameof(CallbackInterface.OnCurrentDeviceChanged)} : {previousDevice?.ToString() ?? "NONE"} -> {_currentDeviceType?.ToString() ?? "NONE"}, INPUT : {(device == null ? "NONE" : GetInputDeviceDebugName(device))}.", this);
 
-                _callback.OnCurrentDeviceChanged(previousDevice, _currentDeviceType.Value);
-            }
+            _callback.OnCurrentDeviceChanged(previousDevice, _currentDeviceType);
         }
     }
 }
