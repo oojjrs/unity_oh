@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
 
@@ -20,68 +19,48 @@ namespace oojjrs.oh
         public interface CallbackInterface
         {
             void OnCurrentDeviceChanged(DeviceEnum? previousDevice, DeviceEnum currentDevice);
-            void OnDeviceConnected(DeviceEnum device);
-            void OnDeviceDisconnected(DeviceEnum device, int deviceCount, int gamepadCount);
-            void OnGamepadInput(DeviceEnum gamepad);
+            void OnDeviceConnected(DeviceEnum device, int deviceCount);
+            void OnDeviceDisconnected(DeviceEnum device, int deviceCount);
+            void OnDeviceInitialized(DeviceEnum device, int deviceCount);
             void OnKeyboardExtendedInput();
-            void OnKeyboardInput();
-            void OnKeyboardUnavailable();
-            void OnMouseButtonInput();
             void OnMouseMove();
-            void OnMouseUnavailable();
         }
 
         private const float ActivationMagnitudeThreshold = 0.1f;
+        private const int DeviceTypeCount = (int)DeviceEnum.Mouse + 1;
+
+        private readonly int[] DeviceCounts = new int[DeviceTypeCount];
 
         private CallbackInterface _callback;
         private InputDevice _currentDevice;
-        private DeviceEnum? _currentDeviceEnum;
+        private bool _currentDeviceNotificationRequired;
+        private DeviceEnum? _currentDeviceType;
         [SerializeField]
         private bool _debugLog;
-        private System.Action<DeviceEnum> _gamepadCallback;
-        private Coroutine _initializationCoroutine;
-        private bool _keyboardAvailable;
-        private System.Action _keyboardCallback;
-        private System.Action _keyboardExtendedCallback;
         private bool _keyboardExtendedInputActivated;
-        private bool _mouseAvailable;
-        private System.Action _mouseButtonCallback;
-        private bool _mouseButtonInputActivated;
-        private System.Action _mouseMoveCallback;
+        private bool _mouseMoveInputActivated;
         private bool _startCalled;
         private bool _started;
 
         private void Awake()
         {
             _callback = GetComponent<CallbackInterface>();
-            if (_callback != null)
-            {
-                _gamepadCallback = _callback.OnGamepadInput;
-                _keyboardCallback = _callback.OnKeyboardInput;
-                _keyboardExtendedCallback = _callback.OnKeyboardExtendedInput;
-                _mouseButtonCallback = _callback.OnMouseButtonInput;
-                _mouseMoveCallback = _callback.OnMouseMove;
-            }
         }
 
         private void OnDisable()
         {
             if (_debugLog)
-                Debug.Log($"{name}> DeviceDetector disabled.", this);
+                Debug.Log($"{name}> DISABLED.", this);
 
             InputSystem.onDeviceChange -= OnDeviceChange;
             InputSystem.onEvent -= OnInputEvent;
 
-            if (_initializationCoroutine != null)
-            {
-                StopCoroutine(_initializationCoroutine);
-                _initializationCoroutine = null;
-            }
-
             _currentDevice = null;
-            _currentDeviceEnum = null;
+            _currentDeviceNotificationRequired = false;
+            _currentDeviceType = null;
             _keyboardExtendedInputActivated = false;
-            _mouseButtonInputActivated = false;
+            _mouseMoveInputActivated = false;
+            _started = false;
         }
 
         private void OnEnable()
@@ -89,11 +68,11 @@ namespace oojjrs.oh
             InputSystem.onDeviceChange += OnDeviceChange;
             InputSystem.onEvent += OnInputEvent;
 
-            if (_startCalled && (_started == false))
+            if ((_startCalled == true) && (_started == false))
                 BeginInitialization();
 
             if (_debugLog)
-                Debug.Log($"{name}> DeviceDetector enabled.", this);
+                Debug.Log($"{name}> ENABLED.", this);
         }
 
         private void Start()
@@ -110,46 +89,43 @@ namespace oojjrs.oh
 
         private void BeginInitialization()
         {
-            if (_initializationCoroutine == null)
-                _initializationCoroutine = StartCoroutine(InitializeAfterOneFrameCoroutine());
-        }
-
-        private int CountDevices(DeviceEnum deviceEnum, InputDevice excludedDevice = null)
-        {
-            var deviceCount = 0;
+            System.Array.Clear(DeviceCounts, 0, DeviceCounts.Length);
 
             foreach (var device in InputSystem.devices)
             {
-                if (device == excludedDevice)
-                    continue;
-
-                if (GetDeviceEnum(device) == deviceEnum)
-                    ++deviceCount;
+                var deviceType = GetDeviceEnum(device);
+                if (deviceType.HasValue)
+                    ++DeviceCounts[(int)deviceType.Value];
             }
 
-            return deviceCount;
-        }
+            _started = true;
 
-        private int CountGamepads(InputDevice excludedDevice = null)
-        {
-            var gamepadCount = 0;
-
-            foreach (var device in InputSystem.devices)
+            for (var i = 0; i < DeviceCounts.Length; ++i)
             {
-                if (device == excludedDevice)
-                    continue;
+                var deviceType = (DeviceEnum)i;
+                var deviceCount = DeviceCounts[i];
+                if (_debugLog)
+                    Debug.Log($"{name}> {nameof(CallbackInterface.OnDeviceInitialized)} : {deviceType}, DEVICE COUNT : {deviceCount}.", this);
 
-                if (device is Gamepad)
-                    ++gamepadCount;
+                _callback.OnDeviceInitialized(deviceType, deviceCount);
+
+                if (_started == false)
+                    return;
             }
-
-            return gamepadCount;
         }
 
         private DeviceEnum? GetDeviceEnum(InputDevice device)
         {
             if (device is Gamepad gamepad)
-                return GetGamepadDeviceEnum(gamepad);
+            {
+                if (InputSystem.IsFirstLayoutBasedOnSecond(gamepad.layout, "DualShockGamepad"))
+                    return DeviceEnum.GamepadPlayStation;
+
+                if (InputSystem.IsFirstLayoutBasedOnSecond(gamepad.layout, "XInputController"))
+                    return DeviceEnum.GamepadXbox;
+
+                return DeviceEnum.GamepadThirdParty;
+            }
 
             if (device is Keyboard)
                 return DeviceEnum.Keyboard;
@@ -160,133 +136,9 @@ namespace oojjrs.oh
             return null;
         }
 
-        private DeviceEnum GetGamepadDeviceEnum(Gamepad gamepad)
-        {
-            if (InputSystem.IsFirstLayoutBasedOnSecond(gamepad.layout, "DualShockGamepad"))
-                return DeviceEnum.GamepadPlayStation;
-
-            if (InputSystem.IsFirstLayoutBasedOnSecond(gamepad.layout, "XInputController"))
-                return DeviceEnum.GamepadXbox;
-
-            return DeviceEnum.GamepadThirdParty;
-        }
-
         private string GetInputDeviceDebugName(InputDevice device)
         {
-            return $"{device.displayName}({device.layout}, id={device.deviceId})";
-        }
-
-        private bool HasKeyboard()
-        {
-            foreach (var device in InputSystem.devices)
-            {
-                if (device is Keyboard)
-                    return true;
-            }
-
-            return false;
-        }
-
-        private bool HasMouse()
-        {
-            foreach (var device in InputSystem.devices)
-            {
-                if (device is Mouse)
-                    return true;
-            }
-
-            return false;
-        }
-
-        private IEnumerator InitializeAfterOneFrameCoroutine()
-        {
-            yield return null;
-
-            if (this == null)
-                yield break;
-
-            _initializationCoroutine = null;
-
-            if ((isActiveAndEnabled == false) || ((_callback as Object) == null))
-                yield break;
-
-            _keyboardAvailable = HasKeyboard();
-            _mouseAvailable = HasMouse();
-            _started = true;
-
-            NotifyConnectedDevices();
-
-            if (_keyboardAvailable == false)
-            {
-                LogCallback(nameof(CallbackInterface.OnKeyboardUnavailable));
-                _callback.OnKeyboardUnavailable();
-            }
-
-            if (_mouseAvailable == false)
-            {
-                LogCallback(nameof(CallbackInterface.OnMouseUnavailable));
-                _callback.OnMouseUnavailable();
-            }
-        }
-
-        private bool IsMouseMoveControl(InputControl control, Mouse mouse)
-        {
-            while ((control != null) && (control != mouse))
-            {
-                if ((control == mouse.delta) || (control == mouse.position))
-                    return true;
-
-                control = control.parent;
-            }
-
-            return false;
-        }
-
-        private bool IsSupportedKey(UnityEngine.InputSystem.Controls.KeyControl key)
-        {
-            return key.keyCode switch
-            {
-                >= Key.Space and <= Key.Digit0 => true,
-                >= Key.LeftShift and <= Key.RightCtrl => true,
-                >= Key.Escape and <= Key.NumLock => true,
-                >= Key.NumpadEnter and <= Key.Numpad9 => true,
-                >= Key.F1 and <= Key.F12 => true,
-                _ => false,
-            };
-        }
-
-        private void LogCallback(string callbackName)
-        {
-            if (_debugLog)
-                Debug.Log($"{name}> {callbackName}.", this);
-        }
-
-        private void NotifyConnectedDevices()
-        {
-            foreach (var device in InputSystem.devices)
-            {
-                var deviceEnum = GetDeviceEnum(device);
-                if (deviceEnum.HasValue == false)
-                    continue;
-
-                NotifyDeviceConnected(deviceEnum.Value, device);
-            }
-        }
-
-        private void NotifyDeviceConnected(DeviceEnum deviceEnum, InputDevice device)
-        {
-            if (_debugLog)
-                Debug.Log($"{name}> {nameof(CallbackInterface.OnDeviceConnected)}: device={deviceEnum}, input={GetInputDeviceDebugName(device)}.", this);
-
-            _callback.OnDeviceConnected(deviceEnum);
-        }
-
-        private void NotifyDeviceDisconnected(DeviceEnum deviceEnum, int deviceCount, int gamepadCount, InputDevice device)
-        {
-            if (_debugLog)
-                Debug.Log($"{name}> {nameof(CallbackInterface.OnDeviceDisconnected)}: device={deviceEnum}, deviceCount={deviceCount}, gamepadCount={gamepadCount}, input={GetInputDeviceDebugName(device)}.", this);
-
-            _callback.OnDeviceDisconnected(deviceEnum, deviceCount, gamepadCount);
+            return $"{device.displayName} ({device.layout}, ID : {device.deviceId})";
         }
 
         private void OnDeviceChange(InputDevice device, InputDeviceChange change)
@@ -296,32 +148,54 @@ namespace oojjrs.oh
 
             if (change == InputDeviceChange.Added)
             {
-                var deviceEnum = GetDeviceEnum(device);
-                if (deviceEnum.HasValue)
-                    NotifyDeviceConnected(deviceEnum.Value, device);
+                var deviceType = GetDeviceEnum(device);
+                if (deviceType.HasValue)
+                {
+                    var deviceCount = ++DeviceCounts[(int)deviceType.Value];
+                    _currentDeviceNotificationRequired = true;
+                    _keyboardExtendedInputActivated = false;
+                    _mouseMoveInputActivated = false;
+
+                    if (_debugLog)
+                        Debug.Log($"{name}> {nameof(CallbackInterface.OnDeviceConnected)} : {deviceType.Value}, DEVICE COUNT : {deviceCount}, INPUT : {GetInputDeviceDebugName(device)}.", this);
+
+                    _callback.OnDeviceConnected(deviceType.Value, deviceCount);
+                }
             }
             else if (change == InputDeviceChange.Removed)
             {
-                var deviceEnum = GetDeviceEnum(device);
-                if (deviceEnum.HasValue)
-                    NotifyDeviceDisconnected(deviceEnum.Value, CountDevices(deviceEnum.Value, device), CountGamepads(device), device);
+                var deviceType = GetDeviceEnum(device);
+                var deviceCount = 0;
+                if (deviceType.HasValue)
+                {
+                    var deviceIndex = (int)deviceType.Value;
+                    if (DeviceCounts[deviceIndex] > 0)
+                        --DeviceCounts[deviceIndex];
+
+                    deviceCount = DeviceCounts[deviceIndex];
+                    _currentDeviceNotificationRequired = true;
+                }
 
                 if (device == _currentDevice)
                 {
                     if (_debugLog)
-                        Debug.Log($"{name}> Current physical device removed: device={deviceEnum?.ToString() ?? "Unknown"}, input={GetInputDeviceDebugName(device)}.", this);
+                        Debug.Log($"{name}> CURRENT PHYSICAL DEVICE REMOVED : {deviceType?.ToString() ?? "UNKNOWN"}, INPUT : {GetInputDeviceDebugName(device)}.", this);
 
                     _currentDevice = null;
-                    _currentDeviceEnum = null;
-                    _mouseButtonInputActivated = false;
+                    _currentDeviceType = null;
                 }
 
-                if (device is Keyboard)
+                if (deviceType.HasValue)
+                {
                     _keyboardExtendedInputActivated = false;
-            }
+                    _mouseMoveInputActivated = false;
 
-            UpdateKeyboardAvailability();
-            UpdateMouseAvailability();
+                    if (_debugLog)
+                        Debug.Log($"{name}> {nameof(CallbackInterface.OnDeviceDisconnected)} : {deviceType.Value}, DEVICE COUNT : {deviceCount}, INPUT : {GetInputDeviceDebugName(device)}.", this);
+
+                    _callback.OnDeviceDisconnected(deviceType.Value, deviceCount);
+                }
+            }
         }
 
         private void OnInputEvent(InputEventPtr inputEvent, InputDevice device)
@@ -336,153 +210,164 @@ namespace oojjrs.oh
             {
                 OnMouseInputEvent(inputEvent, mouse);
                 return;
+
+                void OnMouseInputEvent(InputEventPtr inputEvent, Mouse mouse)
+                {
+                    if ((_currentDeviceNotificationRequired == false) && (_mouseMoveInputActivated == true) && (mouse == _currentDevice))
+                        return;
+
+                    var hasButtonInput = false;
+                    var hasMoveInput = false;
+
+                    foreach (var control in inputEvent.EnumerateChangedControls(mouse, ActivationMagnitudeThreshold))
+                    {
+                        if (control is UnityEngine.InputSystem.Controls.ButtonControl)
+                            hasButtonInput = true;
+                        else if (IsMouseMoveControl(control, mouse))
+                            hasMoveInput = true;
+
+                        if ((hasButtonInput == true) && (hasMoveInput == true))
+                            break;
+
+                        static bool IsMouseMoveControl(InputControl control, Mouse mouse)
+                        {
+                            while ((control != null) && (control != mouse))
+                            {
+                                if ((control == mouse.delta) || (control == mouse.position))
+                                    return true;
+
+                                control = control.parent;
+                            }
+
+                            return false;
+                        }
+                    }
+
+                    if ((hasButtonInput == false) && (hasMoveInput == false))
+                        return;
+
+                    var mouseMoveNotificationRequired = (hasMoveInput == true) && (_mouseMoveInputActivated == false);
+
+                    _keyboardExtendedInputActivated = false;
+
+                    if ((hasButtonInput == true) || (mouseMoveNotificationRequired == true))
+                        _mouseMoveInputActivated = true;
+
+                    if ((mouseMoveNotificationRequired == true) && (hasButtonInput == false))
+                        _currentDeviceNotificationRequired = true;
+
+                    if ((hasButtonInput == true) && ((mouse != _currentDevice) || (_currentDeviceNotificationRequired == true)))
+                    {
+                        UpdateCurrentDevice(mouse, DeviceEnum.Mouse);
+
+                        if (this == null)
+                            return;
+
+                        if ((_started == false) || (isActiveAndEnabled == false) || ((_callback as Object) == null))
+                            return;
+                    }
+
+                    if (mouseMoveNotificationRequired)
+                    {
+                        if (_debugLog)
+                            Debug.Log($"{name}> {nameof(CallbackInterface.OnMouseMove)}.", this);
+
+                        _callback.OnMouseMove();
+                    }
+                }
             }
 
             if (device is Keyboard keyboard)
             {
                 OnKeyboardInputEvent(inputEvent, keyboard);
                 return;
+
+                void OnKeyboardInputEvent(InputEventPtr inputEvent, Keyboard keyboard)
+                {
+                    var hasExtendedInput = false;
+                    var hasStandardInput = false;
+
+                    foreach (var control in inputEvent.EnumerateChangedControls(keyboard, ActivationMagnitudeThreshold))
+                    {
+                        if (control is not UnityEngine.InputSystem.Controls.KeyControl key)
+                            continue;
+
+                        if (IsSupportedKey(key))
+                            hasStandardInput = true;
+                        else
+                            hasExtendedInput = true;
+
+                        static bool IsSupportedKey(UnityEngine.InputSystem.Controls.KeyControl key)
+                        {
+                            return key.keyCode switch
+                            {
+                                >= Key.Space and <= Key.Digit0 => true,
+                                >= Key.LeftShift and <= Key.RightCtrl => true,
+                                >= Key.Escape and <= Key.NumLock => true,
+                                >= Key.NumpadEnter and <= Key.Numpad9 => true,
+                                >= Key.F1 and <= Key.F12 => true,
+                                _ => false,
+                            };
+                        }
+                    }
+
+                    if (hasStandardInput)
+                        _keyboardExtendedInputActivated = false;
+
+                    if ((hasStandardInput == true) && ((keyboard != _currentDevice) || (_currentDeviceNotificationRequired == true)))
+                    {
+                        UpdateCurrentDevice(keyboard, DeviceEnum.Keyboard);
+
+                        if (this == null)
+                            return;
+
+                        if ((_started == false) || (isActiveAndEnabled == false) || ((_callback as Object) == null))
+                            return;
+                    }
+
+                    if ((hasExtendedInput == true) && (_keyboardExtendedInputActivated == false))
+                    {
+                        _keyboardExtendedInputActivated = true;
+                        _currentDeviceNotificationRequired = true;
+                        if (_debugLog)
+                            Debug.Log($"{name}> {nameof(CallbackInterface.OnKeyboardExtendedInput)}.", this);
+
+                        _callback.OnKeyboardExtendedInput();
+                    }
+                }
             }
 
-            if (device == _currentDevice)
+            if ((device == _currentDevice) && (_currentDeviceNotificationRequired == false))
                 return;
 
-            var deviceEnum = GetDeviceEnum(device);
-            if (deviceEnum.HasValue == false)
+            var deviceType = GetDeviceEnum(device);
+            if (deviceType.HasValue == false)
                 return;
 
             foreach (var _ in inputEvent.EnumerateChangedControls(device, ActivationMagnitudeThreshold))
             {
-                UpdateCallback(device, deviceEnum.Value);
+                UpdateCurrentDevice(device, deviceType.Value);
                 break;
             }
-        }
 
-        private void OnKeyboardInputEvent(InputEventPtr inputEvent, Keyboard keyboard)
-        {
-            var hasExtendedInput = false;
-            var hasStandardInput = false;
-
-            foreach (var control in inputEvent.EnumerateChangedControls(keyboard, ActivationMagnitudeThreshold))
+            void UpdateCurrentDevice(InputDevice device, DeviceEnum deviceType)
             {
-                if (control is not UnityEngine.InputSystem.Controls.KeyControl key)
-                    continue;
+                var previousDevice = _currentDeviceType;
 
-                if (IsSupportedKey(key))
-                    hasStandardInput = true;
-                else
-                    hasExtendedInput = true;
-            }
+                _currentDevice = device;
+                _currentDeviceNotificationRequired = false;
+                _currentDeviceType = deviceType;
 
-            if (hasStandardInput)
-                _keyboardExtendedInputActivated = false;
+                if (_currentDeviceType != DeviceEnum.Keyboard)
+                    _keyboardExtendedInputActivated = false;
 
-            if (hasExtendedInput && (_keyboardExtendedInputActivated == false))
-            {
-                _keyboardExtendedInputActivated = true;
-                LogCallback(nameof(CallbackInterface.OnKeyboardExtendedInput));
-                _keyboardExtendedCallback();
-            }
+                if (_currentDeviceType != DeviceEnum.Mouse)
+                    _mouseMoveInputActivated = false;
 
-            if (hasStandardInput && (keyboard != _currentDevice))
-                UpdateCallback(keyboard, DeviceEnum.Keyboard);
-        }
-
-        private void OnMouseInputEvent(InputEventPtr inputEvent, Mouse mouse)
-        {
-            if (_mouseButtonInputActivated && (mouse == _currentDevice))
-                return;
-
-            if (inputEvent.HasButtonPress())
-            {
-                UpdateCurrentDevice(mouse, DeviceEnum.Mouse);
-
-                _mouseButtonInputActivated = true;
-                LogCallback(nameof(CallbackInterface.OnMouseButtonInput));
-                _mouseButtonCallback();
-                return;
-            }
-
-            if (mouse == _currentDevice)
-                return;
-
-            foreach (var control in inputEvent.EnumerateChangedControls(mouse, ActivationMagnitudeThreshold))
-            {
-                if (IsMouseMoveControl(control, mouse) == false)
-                    continue;
-
-                UpdateCurrentDevice(mouse, DeviceEnum.Mouse);
-                LogCallback(nameof(CallbackInterface.OnMouseMove));
-                _mouseMoveCallback();
-                break;
-            }
-        }
-
-        private void UpdateCallback(InputDevice device, DeviceEnum deviceEnum)
-        {
-            UpdateCurrentDevice(device, deviceEnum);
-
-            if ((_currentDeviceEnum == DeviceEnum.GamepadPlayStation) ||
-                (_currentDeviceEnum == DeviceEnum.GamepadThirdParty) ||
-                (_currentDeviceEnum == DeviceEnum.GamepadXbox))
-            {
                 if (_debugLog)
-                    Debug.Log($"{name}> {nameof(CallbackInterface.OnGamepadInput)}: gamepad={_currentDeviceEnum.Value}.", this);
+                    Debug.Log($"{name}> {nameof(CallbackInterface.OnCurrentDeviceChanged)} : {previousDevice?.ToString() ?? "NONE"} -> {_currentDeviceType.Value}, INPUT : {GetInputDeviceDebugName(device)}.", this);
 
-                _gamepadCallback(_currentDeviceEnum.Value);
-            }
-            else if (_currentDeviceEnum == DeviceEnum.Keyboard)
-            {
-                LogCallback(nameof(CallbackInterface.OnKeyboardInput));
-                _keyboardCallback();
-            }
-        }
-
-        private void UpdateCurrentDevice(InputDevice device, DeviceEnum deviceEnum)
-        {
-            var previousDevice = _currentDeviceEnum;
-            var physicalDeviceChanged = device != _currentDevice;
-
-            _currentDevice = device;
-            _currentDeviceEnum = deviceEnum;
-
-            if (_currentDeviceEnum != DeviceEnum.Keyboard)
-                _keyboardExtendedInputActivated = false;
-
-            if ((_currentDeviceEnum != DeviceEnum.Mouse) || physicalDeviceChanged)
-                _mouseButtonInputActivated = false;
-
-            if (_debugLog)
-                Debug.Log($"{name}> {nameof(CallbackInterface.OnCurrentDeviceChanged)}: previous={previousDevice?.ToString() ?? "None"}, current={_currentDeviceEnum.Value}, input={GetInputDeviceDebugName(device)}.", this);
-
-            _callback.OnCurrentDeviceChanged(previousDevice, _currentDeviceEnum.Value);
-        }
-
-        private void UpdateKeyboardAvailability()
-        {
-            var keyboardAvailable = HasKeyboard();
-            if (keyboardAvailable == _keyboardAvailable)
-                return;
-
-            _keyboardAvailable = keyboardAvailable;
-            if (_keyboardAvailable == false)
-            {
-                LogCallback(nameof(CallbackInterface.OnKeyboardUnavailable));
-                _callback.OnKeyboardUnavailable();
-            }
-        }
-
-        private void UpdateMouseAvailability()
-        {
-            var mouseAvailable = HasMouse();
-            if (mouseAvailable == _mouseAvailable)
-                return;
-
-            _mouseAvailable = mouseAvailable;
-            if (_mouseAvailable == false)
-            {
-                LogCallback(nameof(CallbackInterface.OnMouseUnavailable));
-                _callback.OnMouseUnavailable();
+                _callback.OnCurrentDeviceChanged(previousDevice, _currentDeviceType.Value);
             }
         }
     }
