@@ -121,7 +121,7 @@ public class DeviceDetectorReceiver : MonoBehaviour, DeviceDetector.CallbackInte
 - PlayStation 계열은 `DualShockGamepad`, Xbox 계열은 `XInputController` 레이아웃 상속으로 판별한다.
 - 게임패드 입력은 `OnGamepadInput()` 하나로 전달하며 인자의 `DeviceEnum`으로 PlayStation, Xbox, 기타 계열을 구분한다.
 - 키보드 입력은 `OnKeyboardInput()`으로 전달한다.
-- 마우스 이동은 `OnMouseMove()`로 전달해 커서 표시만 처리할 수 있고, 같은 마우스의 첫 버튼 입력은 `OnMouseButtonInput()`으로 따로 전달해 UI 표시 전환을 처리할 수 있다.
+- 마우스의 `delta`·`position`과 그 하위 축 변화를 `OnMouseMove()`로 전달해 커서 표시만 처리할 수 있고, 같은 마우스의 첫 버튼 입력은 `OnMouseButtonInput()`으로 따로 전달해 UI 표시 전환을 처리할 수 있다.
 - 패드나 키보드로 현재 장치가 바뀌면 마우스 버튼 활성 상태를 초기화하며, 다시 마우스를 움직인 뒤 버튼을 누를 때 같은 순서로 콜백한다.
 - 키보드와 마우스의 사용 가능 상태를 각각 추적하고, 없어지면 `OnKeyboardUnavailable()`과 `OnMouseUnavailable()`을 따로 호출한다.
 - 일반 문자·숫자·기호, Ctrl·Alt·Shift, 탐색키, CapsLock·NumLock, 숫자 패드, F1~F12만 키보드 전환 입력으로 허용한다.
