@@ -26,6 +26,7 @@
 - `EntityModelBindingT`를 통한 Entity-Model 연결 관리
 - `MyStableEnumAttribute`로 문자열 필드에 enum 이름을 저장하는 에디터 드롭다운 제공
 - `WindowSizeDetector`로 화면 크기 변경 시 너비와 높이를 콜백에 전달
+- `DisplayDetector`로 현재 모니터 이동, 모니터 설정 변경, 연결·해제를 하나의 변경 콜백에 전달
 - `InputDetector`로 키보드, 마우스, 게임패드 버튼 입력 경로를 콜백에 전달
 - `DeviceDetector`로 장치 연결 상태와 현재 입력 장치를 키보드, 마우스, PlayStation, Xbox, 기타 게임패드 `DeviceEnum`으로 구분
 - `DevelopmentBuildPlayerPrefsResetter`로 개발 빌드의 애플리케이션 버전 변경 시 `PlayerPrefs` 초기화
@@ -66,6 +67,32 @@ Core GameObject의 Receiver는 필요한 계약을 구현한다.
 - 두 구현 모두 `Ignore Time Scale`을 활성화하면 `Time.unscaledTime`, 비활성화하면 `Time.time`을 사용한다.
 - `IsTickable`이 거짓인 동안 경과 시간을 누적하지 않으며, 다시 참이 된 뒤 전체 간격이 지나야 다음 Tick을 호출한다.
 - 프레임 지연으로 놓친 Tick은 한 프레임에 몰아서 호출하지 않는다.
+
+## DisplayDetector
+
+`DisplayDetector`는 메인 창이 위치한 모니터와 연결된 전체 모니터 구성을 확인하고, 변경 이유를 같은 GameObject의 `CallbackInterface` 구현체에 전달한다. Linux, macOS, Windows Standalone에서 사용하는 Unity `Screen.mainWindowDisplayInfo`, `Screen.GetDisplayLayout()`, `Display.onDisplaysUpdated`를 기반으로 한다.
+
+```csharp
+using oojjrs.oh;
+using UnityEngine;
+
+[RequireComponent(typeof(DisplayDetector))]
+public class DisplayDetectorReceiver : MonoBehaviour, DisplayDetector.CallbackInterface
+{
+    void DisplayDetector.CallbackInterface.OnDisplayChanged(DisplayDetector.ChangeTypeEnum changeType)
+    {
+        var resolutions = Screen.resolutions;
+    }
+}
+```
+
+- `CurrentDisplay`는 현재 창이 있는 모니터의 정보가 달라졌을 때 포함된다.
+- `DisplayLayout`은 연결된 모니터의 수, 순서 또는 정보가 달라졌을 때 포함된다.
+- `DisplaySettings`는 모니터 구성의 이름과 수는 같지만 해상도, 방향, 작업 영역 또는 주사율이 달라졌을 때 `DisplayLayout`과 함께 포함된다.
+- 이름, 해상도, 방향, 작업 영역, 주사율 정보가 모두 같은 모니터 사이의 이동은 구분하지 않는다.
+- `InitializerInterface`를 함께 구현하면 최초 시작 시 현재 모니터와 전체 모니터 구성을 전달받는다.
+- 현재 모니터는 기본 `0.5`초 간격으로 확인하고, 전체 모니터 구성은 `Display.onDisplaysUpdated`, 애플리케이션 포커스 복귀, 컴포넌트 재활성화 또는 현재 모니터 변경 시에만 확인한다. 검사 간격은 `Time.timeScale`의 영향을 받지 않는다.
+- Inspector의 `Debug Log`를 켜면 변경 이유와 현재 모니터 정보, 연결된 모니터 수, 콜백 수를 출력한다.
 
 ## InputDetector
 
@@ -149,7 +176,7 @@ public class DeviceDetectorReceiver : MonoBehaviour, DeviceDetector.CallbackInte
 - PrintScreen·ScrollLock·Pause, Meta·Windows, ContextMenu, OEM, F13~F24, 미디어·IME 키와 이후 추가되는 미분류 키는 `OnKeyboardExtendedInput()`으로 한 번만 전달하되 현재 장치를 키보드로 바꾸지 않는다. 일반 키나 다른 장치 입력이 들어오거나 키보드가 해제되면 다시 호출할 수 있게 초기화한다.
 - 입력으로 현재 장치를 전환할 때는 입력 크기 `0.1` 이상의 실제 상태 변화만 처리하며, 장치 연결은 입력 여부와 관계없이 새 장치로 즉시 전환한다.
 - Inspector의 `Debug Log`를 켜면 컴포넌트 활성화 상태, 공개 콜백 호출, 장치 종류와 레이아웃·ID, 종류별 변경 후 장치 수, 현재 장치 전환을 추적할 수 있다. 기본값은 꺼짐이며 입력 이벤트가 무시되는 핫패스에는 로그를 남기지 않는다.
-- `InputDetector`, `WindowSizeDetector`, `MyUpdater`, `ChronoInterfaceMachine`, `SimpleBgmer`, `AutoDisabler`, `LifeTime`도 Inspector의 `Debug Log`를 켰을 때만 입력 전달, 상태 전환, 예약·취소·완료 같은 상세 진단 로그를 출력한다.
+- `DisplayDetector`, `InputDetector`, `WindowSizeDetector`, `MyUpdater`, `ChronoInterfaceMachine`, `SimpleBgmer`, `AutoDisabler`, `LifeTime`도 Inspector의 `Debug Log`를 켰을 때만 입력 전달, 상태 전환, 예약·취소·완료 같은 상세 진단 로그를 출력한다.
 - 씬 전환, Singleton 수명, 영구 오브젝트 존속, 개발 빌드 데이터 초기화처럼 시스템 흐름 복원에 필요한 기존 로그와 모든 경고는 디버그 설정과 관계없이 항상 출력한다.
 - 프로젝트의 Active Input Handling은 `Input System Package (New)` 또는 `Both`로 설정해야 한다.
 
@@ -249,7 +276,7 @@ public string StateName;
 
 - Unity `6000.3`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.33.0`
+- Package version: `1.34.0`
 
 ## 참고
 
