@@ -13,7 +13,8 @@ namespace oojjrs.oh
         private bool State { get; set; }
         private HashSet<ChronoInterface> Values { get; } = new();
 
-        [SerializeField] private bool _debugLog;
+        [SerializeField]
+        private bool _debugLog;
 
         public static void Add(ChronoInterface t)
         {

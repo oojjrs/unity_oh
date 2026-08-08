@@ -5,7 +5,8 @@ namespace oojjrs.oh
 {
     public abstract partial class MyUpdater : MonoBehaviour
     {
-        [SerializeField] private bool _debugLog;
+        [SerializeField]
+        private bool _debugLog;
 
         private bool IsDebugLogEnabled => _debugLog;
 

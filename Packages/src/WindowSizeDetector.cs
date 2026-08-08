@@ -15,7 +15,8 @@ namespace oojjrs.oh
             void Initialize(int width, int height);
         }
 
-        [SerializeField] private bool _debugLog;
+        [SerializeField]
+        private bool _debugLog;
 
         private CallbackInterface[] Callbacks { get; set; }
         private int CurrentHeight { get; set; }

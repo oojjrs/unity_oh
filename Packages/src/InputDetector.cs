@@ -12,7 +12,8 @@ namespace oojjrs.oh
             void Update(string path);
         }
 
-        [SerializeField] private bool _debugLog;
+        [SerializeField]
+        private bool _debugLog;
 
         private CallbackInterface _callback;
 
