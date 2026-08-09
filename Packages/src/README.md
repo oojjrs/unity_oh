@@ -66,7 +66,7 @@ Windows Unity Editor에서 F10을 누르거나 `Tools > OH > Game View Fullscree
 - 현재 사용 중인 Game View를 복제해 해상도, 대상 Display, VSync 같은 직렬화 설정을 유지한다.
 - Game View가 속한 Unity 창의 모니터를 선택하고 툴바와 OS 창 테두리 없이 전체 화면 영역을 사용한다.
 - Play Mode에서 전체화면 Game View에 포커스가 있어도 F10으로 닫을 수 있다.
-- F10, Alt+F4, 스크립트 재컴파일, Domain Reload, Unity Editor 종료 시 생성한 창을 정리하고 이전 포커스와 커서 상태를 복원한다.
+- F10, Alt+F4, 스크립트 재컴파일, Domain Reload, Unity Editor 종료 시 생성한 창을 정리하고 원본 Game View의 렌더 크기·확대 영역과 이전 포커스·커서 상태를 복원한다.
 - 원본 Game View는 도킹 위치에 그대로 남으므로 전체화면 중 변경한 Game View 설정은 원본으로 복사되지 않으며, 원본이 백그라운드에서 함께 렌더링될 수 있다.
 - Unity Editor 내부 창 API를 사용하며 Unity `6000.4.5f1`에서 검증했다. 내부 API가 달라진 버전에서는 원본 Game View를 변경하지 않고 경고를 한 번 출력한 뒤 기능을 비활성화한다.
 
@@ -288,7 +288,7 @@ public string StateName;
 
 - Unity `6000.3`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.35.0`
+- Package version: `1.35.1`
 
 ## 참고
 

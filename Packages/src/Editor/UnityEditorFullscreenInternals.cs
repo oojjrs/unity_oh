@@ -23,9 +23,12 @@ namespace oojjrs.oh
         private static readonly MethodInfo ContainerSetMinMaxSizesMethod;
         private static readonly Type ContainerWindowType;
         private static readonly FieldInfo EditorWindowParentField;
+        private static readonly PropertyInfo GameViewLowResolutionForAspectRatiosProperty;
+        private static readonly MethodInfo GameViewOnResizedMethod;
         private static readonly FieldInfo GameViewRenderTextureField;
         private static readonly PropertyInfo GameViewShowToolbarProperty;
         private static readonly Type GameViewType;
+        private static readonly MethodInfo GameViewUpdateZoomAreaAndParentMethod;
         private static readonly MethodInfo PlayModeViewGetMainMethod;
         private static readonly FieldInfo PlayModeViewTargetTextureField;
         private static readonly Type PlayModeViewType;
@@ -58,8 +61,11 @@ namespace oojjrs.oh
                 ContainerPositionProperty = GetRequiredProperty(ContainerWindowType, "position", InstanceFlags);
                 ContainerSetMinMaxSizesMethod = GetRequiredMethod(ContainerWindowType, "SetMinMaxSizes", InstanceFlags, new[] { typeof(Vector2), typeof(Vector2) });
                 EditorWindowParentField = GetRequiredField(typeof(EditorWindow), "m_Parent", InstanceFlags);
+                GameViewLowResolutionForAspectRatiosProperty = GetRequiredProperty(GameViewType, "lowResolutionForAspectRatios", InstanceFlags);
+                GameViewOnResizedMethod = GetRequiredMethod(GameViewType, "OnResized", InstanceFlags, Type.EmptyTypes);
                 GameViewRenderTextureField = GetRequiredField(GameViewType, "m_RenderTexture", InstanceFlags);
                 GameViewShowToolbarProperty = GetRequiredProperty(GameViewType, "showToolbar", InstanceFlags);
+                GameViewUpdateZoomAreaAndParentMethod = GetRequiredMethod(GameViewType, "UpdateZoomAreaAndParent", InstanceFlags, Type.EmptyTypes);
                 PlayModeViewGetMainMethod = GetRequiredMethod(PlayModeViewType, "GetMainPlayModeView", StaticFlags, Type.EmptyTypes);
                 PlayModeViewTargetTextureField = PlayModeViewType.GetField("m_TargetTexture", InstanceFlags);
                 ShortcutIgnoreWhenPlayModeFocusedField = GetRequiredField(ShortcutIntegrationType, "s_IgnoreWhenPlayModeFocused", StaticFlags);
@@ -141,9 +147,10 @@ namespace oojjrs.oh
                 if (ContainerOnResizeMethod != null)
                     ContainerOnResizeMethod.Invoke(fullscreenContainer, null);
 
+                GameViewLowResolutionForAspectRatiosProperty.SetValue(fullscreenGameView, false);
                 HideGameViewToolbar(fullscreenGameView);
+                RefreshGameView(fullscreenGameView);
                 fullscreenGameView.Focus();
-                fullscreenGameView.Repaint();
             }
             catch
             {
@@ -209,6 +216,18 @@ namespace oojjrs.oh
         internal static bool IsGameView(EditorWindow editorWindow)
         {
             return IsSupported && (editorWindow != null) && GameViewType.IsInstanceOfType(editorWindow);
+        }
+
+        internal static void RefreshGameView(EditorWindow gameView)
+        {
+            EnsureSupported();
+
+            if (gameView == null)
+                return;
+
+            GameViewUpdateZoomAreaAndParentMethod.Invoke(gameView, null);
+            GameViewOnResizedMethod.Invoke(gameView, null);
+            gameView.Repaint();
         }
 
         internal static void RestorePlayModeShortcuts(bool previousIgnoreValue)

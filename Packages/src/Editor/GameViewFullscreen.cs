@@ -22,6 +22,9 @@ namespace oojjrs.oh
         private static bool __previousShortcutIgnore;
         private static double __refocusTime;
         private static bool __shortcutSettingCaptured;
+        private static EditorWindow __sourceGameView;
+        private static EditorWindow __sourceRefreshGameView;
+        private static double __sourceRefreshTime;
         private static bool __unsupportedWarningShown;
 
         private static bool IsOpen => __active;
@@ -57,6 +60,9 @@ namespace oojjrs.oh
 
             CaptureCursorState();
 
+            var sourceGameView = __sourceGameView;
+            __sourceGameView = null;
+
             try
             {
                 UnityEditorFullscreenInternals.CloseFullscreenGameView(__fullscreenGameView, __fullscreenContainer);
@@ -66,7 +72,9 @@ namespace oojjrs.oh
                 Debug.LogException(e);
             }
 
+            RefreshSourceGameView(sourceGameView, true);
             RestoreEditorState();
+            ScheduleSourceRefresh(sourceGameView);
 
             __fullscreenContainer = null;
             __fullscreenGameView = null;
@@ -85,6 +93,7 @@ namespace oojjrs.oh
         private static void Open()
         {
             ClearPendingCursorRestore();
+            ClearPendingSourceRefresh();
 
             __previousFocusedWindow = EditorWindow.focusedWindow;
             __cursorLockMode = Cursor.lockState;
@@ -113,6 +122,7 @@ namespace oojjrs.oh
                     return;
                 }
 
+                __sourceGameView = sourceGameView;
                 __active = true;
 
                 var fullscreenRect = UnityEditorFullscreenInternals.GetFullscreenRect(sourceGameView);
@@ -205,6 +215,24 @@ namespace oojjrs.oh
             }
         }
 
+        private static void RefreshSourceGameView(EditorWindow gameView, bool focus)
+        {
+            if (gameView == null)
+                return;
+
+            try
+            {
+                if (focus)
+                    gameView.Focus();
+
+                UnityEditorFullscreenInternals.RefreshGameView(gameView);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+        }
+
         [MenuItem(MenuPath, false, 100)]
         private static void Toggle()
         {
@@ -216,6 +244,7 @@ namespace oojjrs.oh
 
         private static void Update()
         {
+            UpdateSourceRefresh();
             UpdateCursorRestore();
 
             if (__active == false)
@@ -256,6 +285,12 @@ namespace oojjrs.oh
             __cursorRestoreTime = 0d;
         }
 
+        private static void ClearPendingSourceRefresh()
+        {
+            __sourceRefreshGameView = null;
+            __sourceRefreshTime = 0d;
+        }
+
         private static void LogUnsupportedWarning()
         {
             if (__unsupportedWarningShown)
@@ -263,6 +298,12 @@ namespace oojjrs.oh
 
             __unsupportedWarningShown = true;
             Debug.LogWarning($"{nameof(GameViewFullscreen)}> UNITY EDITOR INTERNAL API IS NOT SUPPORTED: {UnityEditorFullscreenInternals.UnsupportedReason}");
+        }
+
+        private static void ScheduleSourceRefresh(EditorWindow gameView)
+        {
+            __sourceRefreshGameView = gameView;
+            __sourceRefreshTime = gameView == null ? 0d : EditorApplication.timeSinceStartup + 0.2d;
         }
 
         private static void UpdateCursorRestore()
@@ -277,6 +318,16 @@ namespace oojjrs.oh
                 return;
 
             RestoreCursorState(gameView);
+        }
+
+        private static void UpdateSourceRefresh()
+        {
+            if ((__sourceRefreshGameView == null) || (EditorApplication.timeSinceStartup < __sourceRefreshTime))
+                return;
+
+            var gameView = __sourceRefreshGameView;
+            ClearPendingSourceRefresh();
+            RefreshSourceGameView(gameView, false);
         }
 
         [MenuItem(MenuPath, true)]
