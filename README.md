@@ -1,23 +1,38 @@
 # UnityOh
 
-`UnityOh`는 Unity 프로젝트에서 자주 쓰는 GameObject 보조 유틸리티와 확장 메서드를 제공하는 패키지 저장소입니다.
+Unity 프로젝트에서 반복되는 GameObject 처리, 참조 관리, 입력·화면 감지와 실행 흐름을 보조하는 유틸리티 패키지입니다.
 
-현재 패키지 루트는 `Packages/src`이며, 패키지 이름은 `com.oojjrs.oh`입니다.
+## 설치
+
+Unity Package Manager의 `Add package from git URL...`에 다음 주소를 입력합니다.
+
+```text
+https://github.com/oojjrs/unity_oh.git?path=/Packages/src
+```
 
 ## 구성
 
-- 런타임 및 공용 스크립트: `Packages/src`
-- 에디터 스크립트: `Packages/src/Editor`
-- 패키지 메타데이터: `Packages/src/package.json`
-- 어셈블리 정의: `Packages/src/oojjrs.oh.asmdef`
+| 구성 요소 | 종류 | 용도 |
+| --- | --- | --- |
+| `*Extensions` | 확장 메서드 | `GameObject`, `Component`, `Transform`, `Animator`, `AudioMixer` 등의 반복 작업 보조 |
+| `LoaderT<T>`, `TableT<T>`, `FinderT<T>` | 참조 도우미 | 컴포넌트 또는 `ScriptableObject` 기반 참조 조회 |
+| `InputDetector`, `DeviceDetector`, `DisplayDetector`, `WindowSizeDetector` | 런타임 컴포넌트 | 입력 장치, 디스플레이, 창 크기 변화 전달 |
+| `Ticker`, `ApplicationMonitor`, `CoreSingleton` | 런타임 컴포넌트 | Tick, 애플리케이션 생명주기, 초기화 흐름 구성 |
+| `GameViewFullscreen`, `DevTool` | 에디터 도구 | Game View 전체화면과 프로젝트별 개발 도구 기반 제공 |
 
-## 개발 메모
+## 사용
 
-- 기존 `Assets`에 있던 스크립트와 메타 파일은 `Packages/src`로 이동했습니다.
-- `.meta` 파일을 함께 유지해 Unity GUID가 바뀌지 않도록 정리했습니다.
-- 현재 버전은 `1.35.1`입니다.
-- `CoreSingleton`을 중심으로 애플리케이션 초기화, 진입, 생명주기 감시와 1초 Tick을 구성할 수 있습니다.
+```csharp
+var instance = prefab.Instantiate(parent);
+instance.SetActiveSafety(true);
+instance.DestroySafety();
+```
+
+## 제약
+
+- Unity `6000.3` 이상과 Input System `1.19.0`을 사용합니다.
+- `GameViewFullscreen`은 Windows Unity Editor에서만 제공되며 Unity Editor 내부 API가 바뀌면 비활성화될 수 있습니다.
 
 ## 문서
 
-- 패키지 루트 안내: [Packages/src/README.md](Packages/src/README.md)
+- [패키지 상세 문서](Packages/src/README.md)
