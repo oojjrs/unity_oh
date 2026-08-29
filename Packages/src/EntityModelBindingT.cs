@@ -113,6 +113,12 @@ namespace oojjrs.oh
             }
         }
 
+        public void TryRemoveModel(IdType id, float delay = 0, bool destroyModel = true)
+        {
+            if (TryGetModel(id, out var model))
+                Remove(model, delay, destroyModel);
+        }
+
         private void UnbindExistingByEntity(EntityType entity)
         {
             if (_entityEntryTable.TryGetValue(entity, out var entry))

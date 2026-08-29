@@ -273,7 +273,8 @@ myAnimator.aaPlayActionOnceSafety(ActionEnum.Attack);
 - 같은 `Entity`에 모델이 중복 연결되지 않도록 바인딩을 교체한다.
 - 같은 `Id`, `Entity`, `Model`이 이미 등록되어 있으면 경고 로그를 남긴다.
 - `TryGetModel`, `TryGetEntity`, `HasEntity`로 연결 상태를 조회할 수 있다.
-- `Remove`, `Clear`는 필요 시 연결된 모델 오브젝트 삭제까지 함께 처리할 수 있다.
+- `Remove`, `TryRemoveModel`, `Clear`는 필요 시 연결된 모델 오브젝트 삭제까지 함께 처리할 수 있다.
+- `TryRemoveModel`은 전달한 `Id`에 연결된 모델이 없으면 아무 작업도 하지 않는다.
 
 ## MyStableEnumAttribute
 
@@ -293,7 +294,7 @@ public string StateName;
 
 - Unity `6000.3`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.35.2`
+- Package version: `1.35.3`
 
 ## 참고
 
