@@ -225,6 +225,11 @@ myAnimator.aaPlayActionSafety(ActionEnum.Attack);
 myAnimator.aaPlayActionOnceSafety(ActionEnum.Attack);
 ```
 
+- Inspector의 `Initial Parameters`에 이름과 초기값을 지정하면 `Start()`에서 한 번 적용한다. 타입은 연결된 Animator Controller의 파라미터에서 자동으로 판별한다.
+- `Bool`은 `Value Bool`, `Float`는 `Value Float`, `Int`는 `Value Int`를 사용한다. `Trigger`는 `Value Bool`이 true이면 설정하고 false이면 해제한다.
+- 지정하지 않은 파라미터와 초기값 목록이 비어 있는 기존 컴포넌트는 그대로 유지한다. 같은 이름을 여러 번 지정하면 마지막 항목의 값이 적용된다.
+- 이름이 비어 있거나 존재하지 않으면 해당 항목을 경고 후 건너뛴다. 초기값이 지정됐지만 Animator Controller가 없으면 경고 후 초기화를 건너뛴다.
+- 초기값은 `Start()` 시점의 현재 값을 덮어쓰며, 비활성화 후 다시 활성화해도 재적용하지 않는다. `Action` 초기값도 직접 설정하므로 1회성 액션 종료 감지를 시작하지 않는다.
 - `aaPlayAction<T>`는 현재 액션을 중단한 뒤 새 Action 값을 설정한다.
 - `aaPlayActionOnce<T>`는 기존 1회성 액션 종료 감지와 중복 호출 방지 흐름을 유지한다.
 - safety extension은 `MyAnimator`가 null이면 기존 int overload와 같은 경고 로그를 출력한다.
@@ -288,7 +293,7 @@ public string StateName;
 
 - Unity `6000.3`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.35.1`
+- Package version: `1.35.2`
 
 ## 참고
 

@@ -6,6 +6,52 @@ using UnityEngine;
 [RequireComponent(typeof(Animator))]
 public class MyAnimator : MonoBehaviour
 {
+    [Serializable]
+    private struct InitialParameter
+    {
+        [SerializeField]
+        private string _name;
+        [SerializeField]
+        [Tooltip("Bool 값 또는 Trigger의 설정(true)/해제(false) 여부입니다.")]
+        private bool _valueBool;
+        [SerializeField]
+        private float _valueFloat;
+        [SerializeField]
+        private int _valueInt;
+
+        public readonly void Apply(Animator animator, AnimatorControllerParameter[] parameters)
+        {
+            foreach (var parameter in parameters)
+            {
+                if (parameter.name == _name)
+                {
+                    switch (parameter.type)
+                    {
+                        case AnimatorControllerParameterType.Bool:
+                            animator.SetBool(parameter.nameHash, _valueBool);
+                            break;
+                        case AnimatorControllerParameterType.Float:
+                            animator.SetFloat(parameter.nameHash, _valueFloat);
+                            break;
+                        case AnimatorControllerParameterType.Int:
+                            animator.SetInteger(parameter.nameHash, _valueInt);
+                            break;
+                        case AnimatorControllerParameterType.Trigger:
+                            if (_valueBool)
+                                animator.SetTrigger(parameter.nameHash);
+                            else
+                                animator.ResetTrigger(parameter.nameHash);
+                            break;
+                    }
+
+                    return;
+                }
+            }
+
+            Debug.LogWarning($"{animator.name}> ANIMATOR PARAMETER NOT FOUND : {_name}", animator);
+        }
+    }
+
     // 아직은 복귀 액션에 대한 판정은 하지 않음
     public interface ActionEndInterface
     {
@@ -21,6 +67,9 @@ public class MyAnimator : MonoBehaviour
     private Animator _animatorCached;
     private int _currentActionValue;
     [SerializeField]
+    [Tooltip("Start에서 한 번만 적용합니다. 지정하지 않은 파라미터는 유지합니다.")]
+    private InitialParameter[] _initialParameters = Array.Empty<InitialParameter>();
+    [SerializeField]
     private bool _isDebugging = false;
 
     public Animator Animator => _animatorCached;
@@ -29,6 +78,22 @@ public class MyAnimator : MonoBehaviour
     {
         _actionEnds = GetComponents<ActionEndInterface>();
         _animatorCached = GetComponent<Animator>();
+    }
+
+    private void Start()
+    {
+        if (_initialParameters?.Length > 0)
+        {
+            if (_animatorCached.runtimeAnimatorController == null)
+            {
+                Debug.LogWarning($"{name}> ANIMATOR CONTROLLER NOT SET.", this);
+                return;
+            }
+
+            var parameters = _animatorCached.parameters;
+            foreach (var initialParameter in _initialParameters)
+                initialParameter.Apply(_animatorCached, parameters);
+        }
     }
 
     public void aaPlayAction(int value)
