@@ -52,7 +52,15 @@ namespace oojjrs.oh
                 EditorGUI.PropertyField(togglePosition, isEnabledProperty, GUIContent.none);
 
                 using (new EditorGUI.DisabledScope((isEnabledProperty.hasMultipleDifferentValues == false) && (isEnabledProperty.boolValue == false)))
-                    EditorGUI.PropertyField(maximumPosition, maximumProperty, GUIContent.none);
+                {
+                    var previousShowMixedValue = EditorGUI.showMixedValue;
+                    EditorGUI.showMixedValue = maximumProperty.hasMultipleDifferentValues;
+                    EditorGUI.BeginChangeCheck();
+                    var maximum = EditorGUI.DelayedFloatField(maximumPosition, maximumProperty.floatValue);
+                    if (EditorGUI.EndChangeCheck())
+                        maximumProperty.floatValue = maximum;
+                    EditorGUI.showMixedValue = previousShowMixedValue;
+                }
             }
         }
 
