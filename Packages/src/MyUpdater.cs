@@ -37,10 +37,18 @@ namespace oojjrs.oh
 
         private void OnDisable()
         {
-            if (IsApplicationContinue)
+            try
             {
-                WriteDebugLog("Disabled.");
-                OnDisabled();
+                if (IsApplicationContinue)
+                {
+                    WriteDebugLog("Disabled.");
+                    OnDisabled();
+                }
+            }
+            finally
+            {
+                CancelAllNamedInvokers();
+                StopAllCoroutines();
             }
         }
 

@@ -23,6 +23,7 @@
 - `SimpleLog`를 통한 Unity 생명주기와 애플리케이션 상태 로그 출력
 - 코루틴 기반 컴포넌트에서 `yield return` 복귀 후 `this`와 캐시된 Unity 객체 접근 방지
 - `MyUpdater` named invoker의 자연 종료, 명시 취소, 즉시 완료 시 실행 이름 등록 정리
+- `MyUpdater` 비활성화 시 named invoker 등록을 정리하고 해당 컴포넌트의 모든 코루틴 중단
 - `EntityModelBindingT`를 통한 Entity-Model 연결 관리
 - `MyStableEnumAttribute`로 문자열 필드에 enum 이름을 저장하는 에디터 드롭다운 제공
 - `MaxSizeLimiter`로 `RectTransform`의 최대 너비와 높이를 축별로 제한
