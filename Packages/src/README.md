@@ -38,6 +38,21 @@
 - `IntervalTicker`와 `OneSecondTicker`로 timeScale 반영 여부를 선택할 수 있는 반복 Tick 제공
 - 단일 동작만 허용하는 런타임 컴포넌트의 동일 GameObject 중복 부착 방지
 
+## MyApp
+
+`MyApp.GetVersionString()`은 Player Settings의 회사명, 제품명, 버전을 `회사명 · 제품명 · v1.2.3` 형식으로 반환한다. `VersionDisplayEnum` 플래그로 표시 항목을 선택하며 기본값은 `All`이다.
+
+```csharp
+MyApp.GetVersionString();
+MyApp.GetVersionString(buildNumber: "123");
+MyApp.GetVersionString(MyApp.VersionDisplayEnum.Company | MyApp.VersionDisplayEnum.Version);
+```
+
+- 표시 순서는 회사명, 제품명, 버전, 빌드 번호로 고정된다.
+- 빌드 번호는 프로젝트에서 `buildNumber` 인자로 전달하며 `Build 123` 형식으로 표시된다.
+- null, 빈 문자열, 공백뿐인 값은 구분자와 함께 생략하며 각 값의 앞뒤 공백은 제거한다.
+- `None`을 선택하거나 표시할 값이 모두 비어 있으면 빈 문자열을 반환한다.
+
 ## CoreSingleton
 
 `CoreSingleton`은 Startup Scene의 `Core` GameObject에 추가하는 애플리케이션 Core이다. 같은 GameObject에 아래 컴포넌트를 자동으로 요구한다.
@@ -305,7 +320,7 @@ public string StateName;
 - Unity `6000.3`
 - uGUI `2.0.0`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.38.0`
+- Package version: `1.38.1`
 
 ## 참고
 
