@@ -53,6 +53,23 @@ MyApp.GetVersionString(MyApp.VersionDisplayEnum.Company | MyApp.VersionDisplayEn
 - null, 빈 문자열, 공백뿐인 값은 구분자와 함께 생략하며 각 값의 앞뒤 공백은 제거한다.
 - `None`을 선택하거나 표시할 값이 모두 비어 있으면 빈 문자열을 반환한다.
 
+### 공통 종료 흐름
+
+초기화 시 Unity 메인 스레드에서 `MyApp.ConfigureQuit(confirmQuitAsync, prepareQuitAsync, onQuitFailed)`를 연결하면 메뉴의 `MyApp.Quit()`와 Windows Player의 Alt+F4·창 닫기를 같은 흐름으로 처리한다. 새 흐름을 설정하지 않으면 `MyApp.Quit()`은 기존처럼 즉시 종료를 요청한다.
+
+- `confirmQuitAsync`는 `Task<bool>`을 반환한다. 게임의 확인창에서 승인하면 `true`, 취소하거나 창을 닫으면 `false`로 완료한다. 효과음과 확인창 준비 여부는 게임에서 처리한다.
+- `prepareQuitAsync`는 저장·정리 작업의 `Task`를 반환한다. 준비가 끝날 때까지 Unity 업데이트는 계속 실행된다. 실패는 예외로 전달하며 게임 종료 토큰을 미리 취소하지 않는다.
+- `onQuitFailed`는 확인 또는 정리 실패 시 상태를 복구한 뒤 호출한다. OH가 예외를 기록하며 게임은 오류 UI를 표시한다. 오류 UI가 필요 없으면 `null`을 전달한다.
+- `IsQuitPending`은 확인 시작부터 실제 종료까지 중복 요청을 차단한다. 확인 취소나 실패 시 `false`로 돌아간다.
+- `IsExiting`은 승인 후 정리 시작부터 `true`이며 실패 시 `false`로 돌아간다. `OnExitChanged`를 구독해 게임의 입력 차단·복구를 연결한다. 확인 중에는 확인창 입력을 유지한다. 구독자 예외는 기록하고 다른 구독자와 종료 절차를 계속한다.
+- 종료 요청 콜백 스택을 빠져나온 뒤 확인을 시작한다. 정리가 성공하면 내부 허용 상태로 실제 종료를 요청하므로 확인과 저장을 반복하지 않는다.
+- 설정은 메인 스레드의 애플리케이션 초기화 단계에서 수행한다. 진행 중 재설정은 예외이며, 평상시 재설정은 기존 함수를 교체한다. 함수들이 반환하는 Task는 반드시 완료되어야 한다.
+- Domain Reload를 끈 Play Mode 재진입에서도 설정·상태·이벤트 구독을 초기화한다. 이전 실행에서 남은 비동기 작업의 완료로 새 실행을 종료하지 않는다. OH가 게임의 작업 자체를 취소하지는 않으므로 작업 수명은 게임에서 관리한다.
+- 이 흐름을 사용하는 게임은 기존 `QuitRequestCallbackInterface`의 확인·저장 처리와 자체 종료 허용 플래그를 제거한다. 별도의 `wantsToQuit` 거부 로직을 함께 두면 최종 종료도 거부되어 종료 진행 상태가 유지될 수 있다. 실제 종료의 `QuitCallbackInterface` 처리는 유지한다.
+- Editor에서는 메뉴의 `MyApp.Quit()`로 확인·정리를 기다릴 수 있지만, Editor의 Stop 버튼은 Unity가 종료 보류를 보장하지 않는다. iOS/iPadOS 종료 보류도 지원하지 않는다.
+
+Mines에서는 기존 `Hub.App.ExitGame`의 확인창 부분을 `confirmQuitAsync`로, DB 준비 여부 확인과 `Hub.Db.SaveAsync()`를 `prepareQuitAsync`로, 오류 확인창을 `onQuitFailed`로 연결한다. 입력 코드는 `MyApp.IsExiting`과 `MyApp.OnExitChanged`를 사용하고 종료 메뉴는 `MyApp.Quit()`를 호출한다.
+
 ## CoreSingleton
 
 `CoreSingleton`은 Startup Scene의 `Core` GameObject에 추가하는 애플리케이션 Core이다. 같은 GameObject에 아래 컴포넌트를 자동으로 요구한다.
@@ -331,7 +348,7 @@ public string StateName;
 - Unity `6000.3`
 - uGUI `2.0.0`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.38.2`
+- Package version: `1.38.3`
 
 ## 참고
 
