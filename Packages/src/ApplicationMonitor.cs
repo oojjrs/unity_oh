@@ -21,15 +21,22 @@ namespace oojjrs.oh
             void OnApplicationQuit();
         }
 
+        public interface QuitRequestCallbackInterface
+        {
+            bool OnApplicationWantsToQuit();
+        }
+
         private FocusCallbackInterface[] _focusCallbacks;
         private PauseCallbackInterface[] _pauseCallbacks;
         private QuitCallbackInterface[] _quitCallbacks;
+        private QuitRequestCallbackInterface[] _quitRequestCallbacks;
 
         private void Awake()
         {
             _focusCallbacks = GetComponents<FocusCallbackInterface>();
             _pauseCallbacks = GetComponents<PauseCallbackInterface>();
             _quitCallbacks = GetComponents<QuitCallbackInterface>();
+            _quitRequestCallbacks = GetComponents<QuitRequestCallbackInterface>();
         }
 
         private void OnApplicationFocus(bool focus)
@@ -48,6 +55,28 @@ namespace oojjrs.oh
         {
             foreach (var callback in _quitCallbacks)
                 callback.OnApplicationQuit();
+        }
+
+        private void OnDisable()
+        {
+            Application.wantsToQuit -= OnApplicationWantsToQuit;
+        }
+
+        private void OnEnable()
+        {
+            Application.wantsToQuit += OnApplicationWantsToQuit;
+        }
+
+        private bool OnApplicationWantsToQuit()
+        {
+            var canQuit = true;
+            foreach (var callback in _quitRequestCallbacks)
+            {
+                if (callback.OnApplicationWantsToQuit() == false)
+                    canQuit = false;
+            }
+
+            return canQuit;
         }
     }
 }

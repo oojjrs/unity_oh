@@ -76,6 +76,17 @@ Core GameObject의 Receiver는 필요한 계약을 구현한다.
 
 `EntryInterface.EnterCoroutine()`은 Startup Scene을 초기화 전용 Scene으로 유지하기 위한 필수 진입 단계이다. Core는 공통 초기화와 `OnInitialized()` 호출 후 이 코루틴이 끝날 때까지 기다린다.
 
+## ApplicationMonitor
+
+`ApplicationMonitor`는 같은 GameObject에서 `Awake()` 때 찾은 콜백 구현체에 애플리케이션 생명주기를 전달한다.
+
+- `QuitRequestCallbackInterface.OnApplicationWantsToQuit()`는 `Application.wantsToQuit`의 종료 요청을 동기적으로 전달한다. 모든 구현체를 호출하며 하나라도 `false`를 반환하면 이번 종료를 보류한다. 구현체가 없거나 모두 `true`를 반환하면 허용한다.
+- 종료 요청 이벤트는 Monitor의 `OnEnable()`에서 구독하고 `OnDisable()`에서 해제한다. 종료를 보류하는 동안 Monitor를 활성 상태로 유지한다.
+- 비동기 저장은 게임에서 한 번만 시작하고, 진행 중인 재요청에는 `false`를 반환한다. 저장 완료 후 다음 요청을 허용할 상태로 바꾸고 `MyApp.Quit()` 또는 `Application.Quit()`를 다시 호출한다. 콜백 안에서 즉시 종료를 재호출하지 않는다.
+- 기존 `QuitCallbackInterface.OnApplicationQuit()`는 실제 종료 통지로 유지된다. 저장에 필요한 취소 토큰은 저장 완료 전에 취소하지 않는다.
+- OH는 저장 작업, 재시도, 실패 시 종료 여부를 결정하지 않는다.
+- Unity Editor의 Play Mode 종료와 iOS/iPadOS에서는 반환값으로 종료를 막을 수 없다. 종료 보류는 Windows Player에서 확인한다. [Unity Application.wantsToQuit](https://docs.unity3d.com/6000.3/Documentation/ScriptReference/Application-wantsToQuit.html)
+
 ## GameViewFullscreen
 
 Windows Unity Editor에서 F10을 누르거나 `Tools > OH > Game View Fullscreen`을 선택하면 Game View를 현재 모니터 전체를 덮는 무테두리 창으로 열고, 다시 실행하면 닫는다.
@@ -320,7 +331,7 @@ public string StateName;
 - Unity `6000.3`
 - uGUI `2.0.0`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.38.1`
+- Package version: `1.38.2`
 
 ## 참고
 
