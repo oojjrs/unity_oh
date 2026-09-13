@@ -53,22 +53,7 @@ MyApp.GetVersionString(MyApp.VersionDisplayEnum.Company | MyApp.VersionDisplayEn
 - null, 빈 문자열, 공백뿐인 값은 구분자와 함께 생략하며 각 값의 앞뒤 공백은 제거한다.
 - `None`을 선택하거나 표시할 값이 모두 비어 있으면 빈 문자열을 반환한다.
 
-### 공통 종료 흐름
-
-초기화 시 Unity 메인 스레드에서 `MyApp.ConfigureQuit(confirmQuitAsync, prepareQuitAsync, onQuitFailed)`를 연결하면 메뉴의 `MyApp.Quit()`와 Windows Player의 Alt+F4·창 닫기를 같은 흐름으로 처리한다. 새 흐름을 설정하지 않으면 `MyApp.Quit()`은 기존처럼 즉시 종료를 요청한다.
-
-- `confirmQuitAsync`는 `Task<bool>`을 반환한다. 게임의 확인창에서 승인하면 `true`, 취소하거나 창을 닫으면 `false`로 완료한다. 효과음과 확인창 준비 여부는 게임에서 처리한다.
-- `prepareQuitAsync`는 저장·정리 작업의 `Task`를 반환한다. 준비가 끝날 때까지 Unity 업데이트는 계속 실행된다. 실패는 예외로 전달하며 게임 종료 토큰을 미리 취소하지 않는다.
-- `onQuitFailed`는 확인 또는 정리 실패 시 상태를 복구한 뒤 호출한다. OH가 예외를 기록하며 게임은 오류 UI를 표시한다. 오류 UI가 필요 없으면 `null`을 전달한다.
-- `IsQuitPending`은 확인 시작부터 실제 종료까지 중복 요청을 차단한다. 확인 취소나 실패 시 `false`로 돌아간다.
-- `IsExiting`은 승인 후 정리 시작부터 `true`이며 실패 시 `false`로 돌아간다. `OnExitChanged`를 구독해 게임의 입력 차단·복구를 연결한다. 확인 중에는 확인창 입력을 유지한다. 구독자 예외는 기록하고 다른 구독자와 종료 절차를 계속한다.
-- 종료 요청 콜백 스택을 빠져나온 뒤 확인을 시작한다. 정리가 성공하면 내부 허용 상태로 실제 종료를 요청하므로 확인과 저장을 반복하지 않는다.
-- 설정은 메인 스레드의 애플리케이션 초기화 단계에서 수행한다. 진행 중 재설정은 예외이며, 평상시 재설정은 기존 함수를 교체한다. 함수들이 반환하는 Task는 반드시 완료되어야 한다.
-- Domain Reload를 끈 Play Mode 재진입에서도 설정·상태·이벤트 구독을 초기화한다. 이전 실행에서 남은 비동기 작업의 완료로 새 실행을 종료하지 않는다. OH가 게임의 작업 자체를 취소하지는 않으므로 작업 수명은 게임에서 관리한다.
-- 이 흐름을 사용하는 게임은 기존 `QuitRequestCallbackInterface`의 확인·저장 처리와 자체 종료 허용 플래그를 제거한다. 별도의 `wantsToQuit` 거부 로직을 함께 두면 최종 종료도 거부되어 종료 진행 상태가 유지될 수 있다. 실제 종료의 `QuitCallbackInterface` 처리는 유지한다.
-- Editor에서는 메뉴의 `MyApp.Quit()`로 확인·정리를 기다릴 수 있지만, Editor의 Stop 버튼은 Unity가 종료 보류를 보장하지 않는다. iOS/iPadOS 종료 보류도 지원하지 않는다.
-
-Mines에서는 기존 `Hub.App.ExitGame`의 확인창 부분을 `confirmQuitAsync`로, DB 준비 여부 확인과 `Hub.Db.SaveAsync()`를 `prepareQuitAsync`로, 오류 확인창을 `onQuitFailed`로 연결한다. 입력 코드는 `MyApp.IsExiting`과 `MyApp.OnExitChanged`를 사용하고 종료 메뉴는 `MyApp.Quit()`를 호출한다.
+`MyApp.Quit()`은 Editor의 Play Mode를 끝내거나 Player에 즉시 종료를 요청한다. 확인·저장이 필요한 메뉴에서는 `ApplicationMonitor` 인스턴스의 `Quit()`을 호출한다.
 
 ## CoreSingleton
 
@@ -95,14 +80,40 @@ Core GameObject의 Receiver는 필요한 계약을 구현한다.
 
 ## ApplicationMonitor
 
-`ApplicationMonitor`는 같은 GameObject에서 `Awake()` 때 찾은 콜백 구현체에 애플리케이션 생명주기를 전달한다.
+`ApplicationMonitor`는 같은 GameObject에서 `Awake()` 때 찾은 콜백 구현체에 애플리케이션 생명주기를 전달한다. Focus, Pause와 실제 종료 통지는 각각 기존 `FocusCallbackInterface`, `PauseCallbackInterface`, `QuitCallbackInterface`로 전달한다.
 
-- `QuitRequestCallbackInterface.OnApplicationWantsToQuit()`는 `Application.wantsToQuit`의 종료 요청을 동기적으로 전달한다. 모든 구현체를 호출하며 하나라도 `false`를 반환하면 이번 종료를 보류한다. 구현체가 없거나 모두 `true`를 반환하면 허용한다.
-- 종료 요청 이벤트는 Monitor의 `OnEnable()`에서 구독하고 `OnDisable()`에서 해제한다. 종료를 보류하는 동안 Monitor를 활성 상태로 유지한다.
-- 비동기 저장은 게임에서 한 번만 시작하고, 진행 중인 재요청에는 `false`를 반환한다. 저장 완료 후 다음 요청을 허용할 상태로 바꾸고 `MyApp.Quit()` 또는 `Application.Quit()`를 다시 호출한다. 콜백 안에서 즉시 종료를 재호출하지 않는다.
-- 기존 `QuitCallbackInterface.OnApplicationQuit()`는 실제 종료 통지로 유지된다. 저장에 필요한 취소 토큰은 저장 완료 전에 취소하지 않는다.
-- OH는 저장 작업, 재시도, 실패 시 종료 여부를 결정하지 않는다.
-- Unity Editor의 Play Mode 종료와 iOS/iPadOS에서는 반환값으로 종료를 막을 수 없다. 종료 보류는 Windows Player에서 확인한다. [Unity Application.wantsToQuit](https://docs.unity3d.com/6000.3/Documentation/ScriptReference/Application-wantsToQuit.html)
+### 공통 종료 흐름
+
+같은 GameObject의 컴포넌트가 `QuitRequestCallbackInterface`를 구현하면 메뉴의 `applicationMonitor.Quit()`와 Windows Player의 Alt+F4·창 닫기를 같은 비동기 흐름으로 처리한다. `applicationMonitor`는 활성 상태의 Monitor 인스턴스이며, 콜백 구현체가 없으면 즉시 종료를 요청한다.
+
+```csharp
+Task<bool> ApplicationMonitor.QuitRequestCallbackInterface.OnApplicationWantsToQuitAsync()
+{
+    return ShowQuitConfirmationAsync();
+}
+
+Task ApplicationMonitor.QuitRequestCallbackInterface.OnApplicationPrepareQuitAsync()
+{
+    SetGameInputBlocked(true);
+    return SaveAsync();
+}
+
+void ApplicationMonitor.QuitRequestCallbackInterface.OnApplicationQuitFailed(Exception exception)
+{
+    ShowQuitError(exception);
+}
+```
+
+위 메서드는 게임 측 컴포넌트에 구현한다. `SetGameInputBlocked`, `ShowQuitConfirmationAsync`, `SaveAsync`, `ShowQuitError`는 게임의 입력 차단·확인창·저장·오류 표시 함수이며, `System`, `System.Threading.Tasks`, `oojjrs.oh` 네임스페이스를 사용한다.
+
+- `OnApplicationWantsToQuitAsync()`는 확인 결과의 `Task<bool>`을 반환한다. 구현체를 찾은 순서대로 기다리며 하나라도 `false`를 반환하면 이후 확인과 모든 준비 작업을 실행하지 않고 취소한다.
+- 모두 승인하면 `IsExiting`을 `true`로 바꾼 뒤, 모든 `OnApplicationPrepareQuitAsync()`를 같은 순서로 기다린다. 준비 중에도 Unity 업데이트는 계속 실행된다. 저장에 필요한 종료 토큰은 저장 완료 전에 취소하지 않는다.
+- 확인 또는 준비 실패 시 예외를 기록하고 모든 구현체의 `OnApplicationQuitFailed(Exception)`을 호출한다. 승인 전 확인 실패는 대기 상태를 해제하지만, 승인 후 준비 실패는 `IsExiting`과 `IsQuitPending`을 유지하며 정상 실행으로 복귀하거나 준비를 재실행하지 않는다. 준비 실패 시 실제 종료도 자동 요청하지 않는다. 실패 콜백의 예외는 별도로 기록하고 다음 구현체에 계속 통지한다.
+- `IsQuitPending`은 확인 시작부터 중복 요청을 차단하며 승인 전 취소·실패에만 `false`로 돌아간다. `IsExiting`은 승인 후 준비 시작부터 `true`로 고정된다. 입력 차단 등 종료 진입 처리는 `OnApplicationPrepareQuitAsync()`에 둔다.
+- 종료 요청 콜백 스택을 빠져나온 뒤 확인을 시작한다. 준비가 성공하면 내부 허용 상태로 실제 종료를 요청하므로 확인과 저장을 반복하지 않는다. 실제 종료는 `QuitCallbackInterface.OnApplicationQuit()`로 통지한다.
+- 종료 요청 이벤트는 `OnEnable()`에서 중복 없이 구독한다. 승인 전 비활성화는 구독과 확인 대기를 해제한다. 승인 후에는 비활성화되어도 구독과 종료 준비를 유지한다. 실제 종료 또는 Monitor 파괴 시 이전 비동기 작업의 후속 호출을 무효화하며, 파괴 시 구독과 종료 요청 콜백 참조를 해제한다. Monitor는 종료 준비가 끝날 때까지 파괴하지 않는다.
+- 메뉴 호출과 콜백은 Unity 메인 스레드에서 사용하며 반환한 Task는 완료되어야 한다. 별도의 `wantsToQuit` 거부 로직은 최종 종료도 거부할 수 있으므로 확인·저장은 이 인터페이스로 통합한다.
+- Editor에서는 메뉴의 `applicationMonitor.Quit()`로 확인·준비를 기다릴 수 있지만 Stop 버튼은 종료 보류를 보장하지 않는다. iOS/iPadOS도 종료 보류를 지원하지 않는다. [Unity Application.wantsToQuit](https://docs.unity3d.com/6000.3/Documentation/ScriptReference/Application-wantsToQuit.html)
 
 ## GameViewFullscreen
 
@@ -348,7 +359,7 @@ public string StateName;
 - Unity `6000.3`
 - uGUI `2.0.0`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.38.3`
+- Package version: `1.38.4`
 
 ## 참고
 

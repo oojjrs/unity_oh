@@ -1,3 +1,5 @@
+using System;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace oojjrs.oh
@@ -23,13 +25,20 @@ namespace oojjrs.oh
 
         public interface QuitRequestCallbackInterface
         {
-            bool OnApplicationWantsToQuit();
+            Task OnApplicationPrepareQuitAsync();
+            void OnApplicationQuitFailed(Exception exception);
+            Task<bool> OnApplicationWantsToQuitAsync();
         }
 
         private FocusCallbackInterface[] _focusCallbacks;
+        private bool _isQuitAllowed;
         private PauseCallbackInterface[] _pauseCallbacks;
         private QuitCallbackInterface[] _quitCallbacks;
         private QuitRequestCallbackInterface[] _quitRequestCallbacks;
+        private object _quitSession = new();
+
+        public bool IsExiting { get; private set; }
+        public bool IsQuitPending { get; private set; }
 
         private void Awake()
         {
@@ -53,30 +62,116 @@ namespace oojjrs.oh
 
         private void OnApplicationQuit()
         {
+            _quitSession = new();
+
             foreach (var callback in _quitCallbacks)
                 callback.OnApplicationQuit();
         }
 
-        private void OnDisable()
+        private void OnDestroy()
         {
             Application.wantsToQuit -= OnApplicationWantsToQuit;
+            _quitSession = new();
+            _quitRequestCallbacks = Array.Empty<QuitRequestCallbackInterface>();
+        }
+
+        private void OnDisable()
+        {
+            if (IsExiting)
+                return;
+
+            Application.wantsToQuit -= OnApplicationWantsToQuit;
+            _quitSession = new();
+            IsQuitPending = false;
         }
 
         private void OnEnable()
         {
+            Application.wantsToQuit -= OnApplicationWantsToQuit;
             Application.wantsToQuit += OnApplicationWantsToQuit;
         }
 
         private bool OnApplicationWantsToQuit()
         {
-            var canQuit = true;
-            foreach (var callback in _quitRequestCallbacks)
+            if (_isQuitAllowed || (_quitRequestCallbacks.Length == 0))
+                return true;
+
+            Quit();
+            return false;
+        }
+
+        public async void Quit()
+        {
+            if ((isActiveAndEnabled == false) || IsQuitPending)
+                return;
+
+            if (_quitRequestCallbacks.Length == 0)
             {
-                if (callback.OnApplicationWantsToQuit() == false)
-                    canQuit = false;
+                IsQuitPending = true;
+                IsExiting = true;
+                _isQuitAllowed = true;
+                MyApp.Quit();
+                return;
             }
 
-            return canQuit;
+            IsQuitPending = true;
+            var quitSession = _quitSession;
+            try
+            {
+                // wantsToQuit의 현재 요청이 반환된 뒤 확인과 실제 종료를 시작한다.
+                await Task.Yield();
+                if (quitSession != _quitSession)
+                    return;
+
+                foreach (var callback in _quitRequestCallbacks)
+                {
+                    var isConfirmed = await callback.OnApplicationWantsToQuitAsync();
+                    if (quitSession != _quitSession)
+                        return;
+                    if (isConfirmed == false)
+                    {
+                        IsQuitPending = false;
+                        return;
+                    }
+                }
+
+                IsExiting = true;
+
+                foreach (var callback in _quitRequestCallbacks)
+                {
+                    await callback.OnApplicationPrepareQuitAsync();
+                    if (quitSession != _quitSession)
+                        return;
+                }
+
+                _isQuitAllowed = true;
+                MyApp.Quit();
+            }
+            catch (Exception e)
+            {
+                if (quitSession != _quitSession)
+                    return;
+
+                _isQuitAllowed = false;
+                if (IsExiting == false)
+                    IsQuitPending = false;
+
+                Debug.LogException(e);
+                foreach (var callback in _quitRequestCallbacks)
+                {
+                    if (quitSession != _quitSession)
+                        return;
+
+                    try
+                    {
+                        callback.OnApplicationQuitFailed(e);
+                    }
+                    catch (Exception callbackException)
+                    {
+                        Debug.LogException(callbackException);
+                    }
+                }
+            }
         }
     }
 }
