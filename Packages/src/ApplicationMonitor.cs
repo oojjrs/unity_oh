@@ -8,6 +8,13 @@ namespace oojjrs.oh
     [DisallowMultipleComponent]
     public class ApplicationMonitor : MonoBehaviour
     {
+        private enum QuitStepEnum
+        {
+            Idle,
+            Confirming,
+            Allowed,
+        }
+
         public interface FocusCallbackInterface
         {
             void OnApplicationFocus(bool focus);
@@ -20,32 +27,29 @@ namespace oojjrs.oh
 
         public interface QuitCallbackInterface
         {
-            void OnApplicationQuit();
+            Task OnApplicationQuitAsync();
         }
 
         public interface QuitRequestCallbackInterface
         {
-            Task OnApplicationPrepareQuitAsync();
             void OnApplicationQuitFailed(Exception exception);
             Task<bool> OnApplicationWantsToQuitAsync();
         }
 
         private FocusCallbackInterface[] _focusCallbacks;
-        private bool _isQuitAllowed;
         private PauseCallbackInterface[] _pauseCallbacks;
         private QuitCallbackInterface[] _quitCallbacks;
-        private QuitRequestCallbackInterface[] _quitRequestCallbacks;
-        private object _quitSession = new();
-
-        public bool IsExiting { get; private set; }
-        public bool IsQuitPending { get; private set; }
+        private QuitRequestCallbackInterface _quitRequestCallback;
+        private QuitStepEnum _quitStep;
 
         private void Awake()
         {
             _focusCallbacks = GetComponents<FocusCallbackInterface>();
             _pauseCallbacks = GetComponents<PauseCallbackInterface>();
             _quitCallbacks = GetComponents<QuitCallbackInterface>();
-            _quitRequestCallbacks = GetComponents<QuitRequestCallbackInterface>();
+            _quitRequestCallback = GetComponent<QuitRequestCallbackInterface>();
+
+            Application.wantsToQuit += OnApplicationWantsToQuit;
         }
 
         private void OnApplicationFocus(bool focus)
@@ -60,118 +64,74 @@ namespace oojjrs.oh
                 callback.OnApplicationPause(pause);
         }
 
-        private void OnApplicationQuit()
-        {
-            _quitSession = new();
-
-            foreach (var callback in _quitCallbacks)
-                callback.OnApplicationQuit();
-        }
-
         private void OnDestroy()
         {
             Application.wantsToQuit -= OnApplicationWantsToQuit;
-            _quitSession = new();
-            _quitRequestCallbacks = Array.Empty<QuitRequestCallbackInterface>();
-        }
-
-        private void OnDisable()
-        {
-            if (IsExiting)
-                return;
-
-            Application.wantsToQuit -= OnApplicationWantsToQuit;
-            _quitSession = new();
-            IsQuitPending = false;
-        }
-
-        private void OnEnable()
-        {
-            Application.wantsToQuit -= OnApplicationWantsToQuit;
-            Application.wantsToQuit += OnApplicationWantsToQuit;
         }
 
         private bool OnApplicationWantsToQuit()
         {
-            if (_isQuitAllowed || (_quitRequestCallbacks.Length == 0))
+            if (_quitStep == QuitStepEnum.Allowed)
                 return true;
 
             Quit();
             return false;
         }
 
-        public async void Quit()
+        private async void Quit()
         {
-            if ((isActiveAndEnabled == false) || IsQuitPending)
+            if (_quitStep != QuitStepEnum.Idle)
                 return;
 
-            if (_quitRequestCallbacks.Length == 0)
-            {
-                IsQuitPending = true;
-                IsExiting = true;
-                _isQuitAllowed = true;
-                MyApp.Quit();
-                return;
-            }
+            _quitStep = QuitStepEnum.Confirming;
+            // wantsToQuit의 현재 요청이 반환된 뒤 확인과 실제 종료를 시작한다.
+            await Task.Yield();
 
-            IsQuitPending = true;
-            var quitSession = _quitSession;
-            try
+            if (_quitRequestCallback != null)
             {
-                // wantsToQuit의 현재 요청이 반환된 뒤 확인과 실제 종료를 시작한다.
-                await Task.Yield();
-                if (quitSession != _quitSession)
-                    return;
-
-                foreach (var callback in _quitRequestCallbacks)
+                try
                 {
-                    var isConfirmed = await callback.OnApplicationWantsToQuitAsync();
-                    if (quitSession != _quitSession)
-                        return;
+                    var isConfirmed = await _quitRequestCallback.OnApplicationWantsToQuitAsync();
                     if (isConfirmed == false)
                     {
-                        IsQuitPending = false;
+                        _quitStep = QuitStepEnum.Idle;
                         return;
                     }
                 }
-
-                IsExiting = true;
-
-                foreach (var callback in _quitRequestCallbacks)
+                catch (Exception e)
                 {
-                    await callback.OnApplicationPrepareQuitAsync();
-                    if (quitSession != _quitSession)
-                        return;
-                }
+                    _quitStep = QuitStepEnum.Idle;
 
-                _isQuitAllowed = true;
-                MyApp.Quit();
-            }
-            catch (Exception e)
-            {
-                if (quitSession != _quitSession)
-                    return;
-
-                _isQuitAllowed = false;
-                if (IsExiting == false)
-                    IsQuitPending = false;
-
-                Debug.LogException(e);
-                foreach (var callback in _quitRequestCallbacks)
-                {
-                    if (quitSession != _quitSession)
-                        return;
+                    Debug.LogException(e);
 
                     try
                     {
-                        callback.OnApplicationQuitFailed(e);
+                        _quitRequestCallback.OnApplicationQuitFailed(e);
                     }
                     catch (Exception callbackException)
                     {
                         Debug.LogException(callbackException);
                     }
+
+                    return;
                 }
             }
+
+            foreach (var callback in _quitCallbacks)
+            {
+                try
+                {
+                    await callback.OnApplicationQuitAsync();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                }
+            }
+
+            _quitStep = QuitStepEnum.Allowed;
+
+            MyApp.Quit();
         }
     }
 }
