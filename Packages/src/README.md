@@ -80,36 +80,30 @@ Core GameObject의 Receiver는 필요한 계약을 구현한다.
 
 ## ApplicationMonitor
 
-`ApplicationMonitor`는 같은 GameObject에서 `Awake()` 때 찾은 콜백 구현체를 사용한다. Focus와 Pause는 각각 복수의 `FocusCallbackInterface`, `PauseCallbackInterface`에 전달한다. 종료 확인은 단일 `QuitRequestCallbackInterface`, 종료 처리는 복수의 `QuitCallbackInterface`가 담당한다.
+`ApplicationMonitor`는 같은 GameObject에서 `Awake()` 때 찾은 콜백 구현체를 사용한다. Focus와 Pause는 각각 복수의 `FocusCallbackInterface`, `PauseCallbackInterface`에 전달한다. 종료 확인과 처리는 단일 `QuitCallbackInterface.OnApplicationQuitAsync()`가 함께 담당한다.
 
 ### 공통 종료 흐름
 
-공개 종료 진입점은 `MyApp.Quit()`이다. Windows Player에서는 `Application.wantsToQuit`를 Monitor가 받아 비공개 `Quit()`에서 확인·종료 처리를 수행한다. 메뉴 종료와 Alt+F4·창 닫기에 같은 흐름을 사용한다.
+공개 종료 진입점은 `MyApp.Quit()`이다. Windows Player에서는 `Application.wantsToQuit`를 Monitor가 받아 지역 함수 `Quit()`에서 확인·종료 처리를 수행한다. 메뉴 종료와 Alt+F4·창 닫기에 같은 흐름을 사용한다.
 
 ```csharp
-Task<bool> ApplicationMonitor.QuitRequestCallbackInterface.OnApplicationWantsToQuitAsync()
+async Task<bool> ApplicationMonitor.QuitCallbackInterface.OnApplicationQuitAsync()
 {
-    return ShowQuitConfirmationAsync();
-}
+    if (await ShowQuitConfirmationAsync() == false)
+        return false;
 
-void ApplicationMonitor.QuitRequestCallbackInterface.OnApplicationQuitFailed(Exception exception)
-{
-    ShowQuitError(exception);
-}
-
-Task ApplicationMonitor.QuitCallbackInterface.OnApplicationQuitAsync()
-{
     SetGameInputBlocked(true);
-    return SaveAsync();
+    await SaveAsync();
+    return true;
 }
 ```
 
-위 메서드는 게임 측 컴포넌트에 구현한다. `ShowQuitConfirmationAsync`, `ShowQuitError`, `SetGameInputBlocked`, `SaveAsync`는 게임의 확인창·오류 표시·입력 차단·저장 함수이며, `System`, `System.Threading.Tasks`, `oojjrs.oh` 네임스페이스를 사용한다.
+위 메서드는 게임 측 컴포넌트에 구현한다. `ShowQuitConfirmationAsync`, `SetGameInputBlocked`, `SaveAsync`는 게임의 확인창·입력 차단·저장 함수이며, `System.Threading.Tasks`, `oojjrs.oh` 네임스페이스를 사용한다.
 
-- 현재 종료 요청 콜백이 반환된 뒤 비동기 처리를 시작한다. 확인 콜백이 없으면 확인만 생략하고 종료 콜백은 실행한다.
-- 확인 결과가 `false`이면 종료를 취소한다. 확인 중 예외는 기록한 뒤 `OnApplicationQuitFailed(Exception)`으로 알리고 요청 대기 상태로 돌아간다. 실패 알림의 예외도 기록한다.
-- 승인 후에는 수집한 순서대로 모든 `OnApplicationQuitAsync()`를 기다린다. 종료 콜백에서 예외가 발생해도 기록하고 다음 콜백을 실행한다. 모두 처리한 뒤 내부 종료 허용 상태로 `MyApp.Quit()`을 호출해 실제 종료한다. 승인 후 취소·복구·재시도는 하지 않는다.
-- 확인과 종료 처리 중 중복 요청은 차단한다. 확인이 취소되거나 실패한 경우에만 다시 요청할 수 있다.
+- 같은 GameObject에 `QuitCallbackInterface` 구현체가 필요하다. 현재 종료 요청 콜백이 반환된 뒤 `OnApplicationQuitAsync()`를 기다린다. 콜백이 확인과 필요한 종료 처리를 수행하고 종료 허용 여부를 반환한다.
+- `false`를 반환하면 종료를 취소한다. 다음 종료 요청에서는 콜백을 다시 실행한다.
+- `true`를 반환하면 종료를 허용하고 `MyApp.Quit()`을 호출해 실제 종료한다.
+- 처리 중 중복 요청은 차단한다. `false`로 취소한 경우 다시 요청할 수 있다. Monitor는 콜백 예외를 처리하지 않는다.
 - 반환하는 Task는 완료되어야 한다. 완료되지 않는 Task를 강제로 취소하거나 시간 제한으로 중단하지 않는다. 저장에 필요한 토큰은 저장 완료 전에 취소하지 않는다.
 - Core와 Monitor는 애플리케이션 수명 동안 유지하는 구성이다. 종료 요청 이벤트는 `Awake()`에서 구독하고 `OnDestroy()`에서 해제한다. 비활성화에 따른 취소·복구·재초기화는 제공하지 않는다.
 - 콜백은 Unity 메인 스레드에서 호출한다. 별도의 `wantsToQuit` 거부 로직은 최종 종료도 거부할 수 있으므로 확인은 이 인터페이스로 통합한다.
@@ -359,7 +353,7 @@ public string StateName;
 - Unity `6000.3`
 - uGUI `2.0.0`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.38.5`
+- Package version: `1.38.6`
 
 ## 참고
 

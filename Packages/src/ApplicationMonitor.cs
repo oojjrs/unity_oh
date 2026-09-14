@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -8,13 +7,6 @@ namespace oojjrs.oh
     [DisallowMultipleComponent]
     public class ApplicationMonitor : MonoBehaviour
     {
-        private enum QuitStepEnum
-        {
-            Idle,
-            Confirming,
-            Allowed,
-        }
-
         public interface FocusCallbackInterface
         {
             void OnApplicationFocus(bool focus);
@@ -27,27 +19,20 @@ namespace oojjrs.oh
 
         public interface QuitCallbackInterface
         {
-            Task OnApplicationQuitAsync();
-        }
-
-        public interface QuitRequestCallbackInterface
-        {
-            void OnApplicationQuitFailed(Exception exception);
-            Task<bool> OnApplicationWantsToQuitAsync();
+            Task<bool> OnApplicationQuitAsync();
         }
 
         private FocusCallbackInterface[] _focusCallbacks;
+        private bool _isQuitAllowed;
+        private bool _isQuitProcessing;
         private PauseCallbackInterface[] _pauseCallbacks;
-        private QuitCallbackInterface[] _quitCallbacks;
-        private QuitRequestCallbackInterface _quitRequestCallback;
-        private QuitStepEnum _quitStep;
+        private QuitCallbackInterface _quitCallback;
 
         private void Awake()
         {
             _focusCallbacks = GetComponents<FocusCallbackInterface>();
             _pauseCallbacks = GetComponents<PauseCallbackInterface>();
-            _quitCallbacks = GetComponents<QuitCallbackInterface>();
-            _quitRequestCallback = GetComponent<QuitRequestCallbackInterface>();
+            _quitCallback = GetComponent<QuitCallbackInterface>();
 
             Application.wantsToQuit += OnApplicationWantsToQuit;
         }
@@ -71,67 +56,32 @@ namespace oojjrs.oh
 
         private bool OnApplicationWantsToQuit()
         {
-            if (_quitStep == QuitStepEnum.Allowed)
+            if (_isQuitAllowed)
                 return true;
 
             Quit();
             return false;
-        }
 
-        private async void Quit()
-        {
-            if (_quitStep != QuitStepEnum.Idle)
-                return;
-
-            _quitStep = QuitStepEnum.Confirming;
-            // wantsToQuit의 현재 요청이 반환된 뒤 확인과 실제 종료를 시작한다.
-            await Task.Yield();
-
-            if (_quitRequestCallback != null)
+            async void Quit()
             {
-                try
+                if (_isQuitProcessing)
+                    return;
+
+                _isQuitProcessing = true;
+
+                // wantsToQuit의 현재 요청이 반환된 뒤 확인과 실제 종료를 시작한다.
+                await Task.Yield();
+
+                if (await _quitCallback.OnApplicationQuitAsync() == false)
                 {
-                    var isConfirmed = await _quitRequestCallback.OnApplicationWantsToQuitAsync();
-                    if (isConfirmed == false)
-                    {
-                        _quitStep = QuitStepEnum.Idle;
-                        return;
-                    }
-                }
-                catch (Exception e)
-                {
-                    _quitStep = QuitStepEnum.Idle;
-
-                    Debug.LogException(e);
-
-                    try
-                    {
-                        _quitRequestCallback.OnApplicationQuitFailed(e);
-                    }
-                    catch (Exception callbackException)
-                    {
-                        Debug.LogException(callbackException);
-                    }
-
+                    _isQuitProcessing = false;
                     return;
                 }
+
+                _isQuitAllowed = true;
+
+                MyApp.Quit();
             }
-
-            foreach (var callback in _quitCallbacks)
-            {
-                try
-                {
-                    await callback.OnApplicationQuitAsync();
-                }
-                catch (Exception e)
-                {
-                    Debug.LogException(e);
-                }
-            }
-
-            _quitStep = QuitStepEnum.Allowed;
-
-            MyApp.Quit();
         }
     }
 }
