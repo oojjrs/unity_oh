@@ -8,7 +8,7 @@ namespace oojjrs.oh
     [InitializeOnLoad]
     internal static class GameViewFullscreen
     {
-        private const string MenuPath = "Tools/OH/Game View Fullscreen _F10";
+        private const string MenuPath = "Tools/Oh/Game View Fullscreen _F10";
 
         private static bool __active;
         private static EditorWindow __cursorRestoreGameView;

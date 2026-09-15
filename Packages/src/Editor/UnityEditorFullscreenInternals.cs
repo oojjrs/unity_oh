@@ -10,7 +10,7 @@ namespace oojjrs.oh
 {
     internal static class UnityEditorFullscreenInternals
     {
-        internal const string FullscreenWindowName = "OH Game View Fullscreen";
+        internal const string FullscreenWindowName = "Oh Game View Fullscreen";
 
         private const BindingFlags InstanceFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
         private const BindingFlags StaticFlags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
