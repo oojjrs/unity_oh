@@ -21,24 +21,52 @@ namespace oojjrs.oh
             var paths = AssetDatabase.FindAssets("t:Prefab", new[] { "Assets" }).Select(AssetDatabase.GUIDToAssetPath).Where(path => path.EndsWith(".prefab", StringComparison.OrdinalIgnoreCase)).OrderBy(path => path, StringComparer.Ordinal).ToArray();
             if (paths.Length == 0)
             {
-                EditorUtility.DisplayDialog("프리팹 재직렬화", "Assets 아래에 프리팹이 없습니다.", "확인");
+                EditorUtility.DisplayDialog("프리팹 다시 저장", "Assets 아래에 프리팹이 없습니다.", "확인");
                 return;
             }
 
-            if (EditorUtility.DisplayDialog("프리팹 재직렬화", $"Assets 아래의 프리팹 {paths.Length}개를 현재 Unity 버전으로 재직렬화하고 저장합니다.\n.meta 파일은 제외됩니다. 계속하시겠습니까?", "재직렬화", "취소") == false)
+            if (EditorUtility.DisplayDialog("프리팹 다시 저장", $"Assets 아래의 프리팹 {paths.Length}개를 하나씩 로드하고 원래 경로에 저장합니다.\n중단해도 이미 저장한 프리팹은 유지됩니다. 계속하시겠습니까?", "저장", "취소") == false)
                 return;
 
             try
             {
-                EditorUtility.DisplayProgressBar("프리팹 재직렬화", $"프리팹 {paths.Length}개를 재직렬화하는 중입니다.", 0f);
-                AssetDatabase.ForceReserializeAssets(paths, ForceReserializeAssetsOptions.ReserializeAssets);
+                for (var index = 0; index < paths.Length; ++index)
+                {
+                    if (EditorUtility.DisplayCancelableProgressBar("프리팹 다시 저장", $"{index}/{paths.Length}: {paths[index]}", (float)index / paths.Length))
+                        return;
+
+                    try
+                    {
+                        SavePrefab(paths[index]);
+                    }
+                    catch (Exception exception)
+                    {
+                        EditorUtility.DisplayDialog("프리팹 저장 실패", $"{paths[index]}\n{exception.Message}", "확인");
+                        return;
+                    }
+                }
             }
             finally
             {
                 EditorUtility.ClearProgressBar();
             }
 
-            EditorUtility.DisplayDialog("프리팹 재직렬화", $"프리팹 {paths.Length}개의 재직렬화를 완료했습니다.", "확인");
+            EditorUtility.DisplayDialog("프리팹 저장 완료", $"프리팹 {paths.Length}개를 저장했습니다.", "확인");
+        }
+
+        private static void SavePrefab(string path)
+        {
+            var root = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                PrefabUtility.SaveAsPrefabAsset(root, path, out var success);
+                if (success == false)
+                    throw new InvalidOperationException("Unity가 프리팹 저장 실패를 반환했습니다.");
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
         }
     }
 }
