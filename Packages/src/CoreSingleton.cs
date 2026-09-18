@@ -7,6 +7,7 @@ namespace oojjrs.oh
     [DisallowMultipleComponent]
     [RequireComponent(typeof(ApplicationMonitor))]
     [RequireComponent(typeof(DevelopmentBuildPlayerPrefsResetter))]
+    [RequireComponent(typeof(EscapeDetector))]
     [RequireComponent(typeof(OneSecondTicker))]
     [RequireComponent(typeof(SolidObject))]
     public class CoreSingleton : SingletonMonoBehaviourT<CoreSingleton>
