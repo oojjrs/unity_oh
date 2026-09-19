@@ -1,6 +1,7 @@
 #if UNITY_EDITOR_WIN
 using System;
 using UnityEditor;
+using UnityEditor.ShortcutManagement;
 using UnityEngine;
 
 namespace oojjrs.oh
@@ -8,7 +9,7 @@ namespace oojjrs.oh
     [InitializeOnLoad]
     internal static class GameViewFullscreen
     {
-        private const string MenuPath = "Tools/Oh/Game View Fullscreen _F10";
+        private const string MenuPath = "Tools/Oh/Game View Fullscreen";
 
         private static bool __active;
         private static EditorWindow __cursorRestoreGameView;
@@ -240,6 +241,12 @@ namespace oojjrs.oh
                 Close();
             else
                 Open();
+        }
+
+        [Shortcut(MenuPath, KeyCode.ScrollLock)]
+        private static void ToggleShortcut()
+        {
+            EditorApplication.ExecuteMenuItem(MenuPath);
         }
 
         private static void Update()

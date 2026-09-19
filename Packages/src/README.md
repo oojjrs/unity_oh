@@ -27,7 +27,7 @@
 - `EntityModelBindingT`를 통한 Entity-Model 연결 관리
 - `MyStableEnumAttribute`로 문자열 필드에 enum 이름을 저장하는 에디터 드롭다운 제공
 - `MaxSizeLimiter`로 `RectTransform`의 최대 너비와 높이를 축별로 제한
-- `GameViewFullscreen`으로 Windows Editor에서 F10을 눌러 Game View를 모니터 전체화면으로 전환
+- `GameViewFullscreen`으로 Windows Editor에서 Scroll Lock을 눌러 Game View를 모니터 전체화면으로 전환
 - `Tools > Oh > Resave All Assets`에서 Assets 아래 Unity native 직렬화 에셋과 프리팹·씬·Input Actions·Sprite Atlas V2를 로드하고 원래 경로에 저장. 코드·원본 미디어는 제외. 저장 실패 시 건너뛰거나 중단할 수 있으며 이미 저장한 파일은 유지
 - `WindowSizeDetector`로 화면 크기 변경 시 너비와 높이를 콜백에 전달
 - `DisplayDetector`로 현재 모니터 이동, 모니터 설정 변경, 연결·해제를 하나의 변경 콜백에 전달
@@ -112,12 +112,12 @@ async Task<bool> ApplicationMonitor.QuitCallbackInterface.OnApplicationQuitAsync
 
 ## GameViewFullscreen
 
-Windows Unity Editor에서 F10을 누르거나 `Tools > OH > Game View Fullscreen`을 선택하면 Game View를 현재 모니터 전체를 덮는 무테두리 창으로 열고, 다시 실행하면 닫는다.
+Windows Unity Editor에서 Scroll Lock을 누르거나 `Tools > OH > Game View Fullscreen`을 선택하면 Game View를 현재 모니터 전체를 덮는 무테두리 창으로 열고, 다시 실행하면 닫는다.
 
 - 현재 사용 중인 Game View를 복제해 해상도, 대상 Display, VSync 같은 직렬화 설정을 유지한다.
 - Game View가 속한 Unity 창의 모니터를 선택하고 툴바와 OS 창 테두리 없이 전체 화면 영역을 사용한다.
-- Play Mode에서 전체화면 Game View에 포커스가 있어도 F10으로 닫을 수 있다.
-- F10, Alt+F4, 스크립트 재컴파일, Domain Reload, Unity Editor 종료 시 생성한 창을 정리하고 원본 Game View의 렌더 크기·확대 영역과 이전 포커스·커서 상태를 복원한다.
+- Play Mode에서 전체화면 Game View에 포커스가 있어도 Scroll Lock으로 닫을 수 있다.
+- Scroll Lock, Alt+F4, 스크립트 재컴파일, Domain Reload, Unity Editor 종료 시 생성한 창을 정리하고 원본 Game View의 렌더 크기·확대 영역과 이전 포커스·커서 상태를 복원한다.
 - 원본 Game View는 도킹 위치에 그대로 남으므로 전체화면 중 변경한 Game View 설정은 원본으로 복사되지 않으며, 원본이 백그라운드에서 함께 렌더링될 수 있다.
 - Unity Editor 내부 창 API를 사용하며 Unity `6000.4.5f1`에서 검증했다. 내부 API가 달라진 버전에서는 원본 Game View를 변경하지 않고 경고를 한 번 출력한 뒤 기능을 비활성화한다.
 
@@ -354,7 +354,7 @@ public string StateName;
 - Unity `6000.3`
 - uGUI `2.0.0`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.41.0`
+- Package version: `1.41.1`
 
 ## 참고
 
