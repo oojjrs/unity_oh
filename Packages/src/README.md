@@ -104,7 +104,7 @@ async Task<bool> ApplicationMonitor.QuitCallbackInterface.OnApplicationQuitAsync
 - 같은 GameObject에 `QuitCallbackInterface` 구현체가 필요하다. 현재 종료 요청 콜백이 반환된 뒤 `OnApplicationQuitAsync()`를 기다린다. 콜백이 확인과 필요한 종료 처리를 수행하고 종료 허용 여부를 반환한다.
 - `false`를 반환하면 종료를 취소한다. 다음 종료 요청에서는 콜백을 다시 실행한다.
 - `true`를 반환하면 종료를 허용하고 `MyApp.Quit()`을 호출해 실제 종료한다.
-- 처리 중 중복 요청은 차단한다. `false`로 취소한 경우 다시 요청할 수 있다. Monitor는 콜백 예외를 처리하지 않는다.
+- 처리 중에도 새 종료 요청마다 `OnApplicationQuitAsync()`를 다시 호출한다. 구현체는 진행 중인 메시지 창을 재사용하는 등 반복 호출을 멱등하게 처리해야 한다. 여러 호출이 `true`를 반환해도 Monitor는 실제 종료를 한 번만 요청한다. Monitor는 콜백 예외를 처리하지 않는다.
 - 반환하는 Task는 완료되어야 한다. 완료되지 않는 Task를 강제로 취소하거나 시간 제한으로 중단하지 않는다. 저장에 필요한 토큰은 저장 완료 전에 취소하지 않는다.
 - Core와 Monitor는 애플리케이션 수명 동안 유지하는 구성이다. 종료 요청 이벤트는 `Awake()`에서 구독하고 `OnDestroy()`에서 해제한다. 비활성화에 따른 취소·복구·재초기화는 제공하지 않는다.
 - 콜백은 Unity 메인 스레드에서 호출한다. 별도의 `wantsToQuit` 거부 로직은 최종 종료도 거부할 수 있으므로 확인은 이 인터페이스로 통합한다.
@@ -354,7 +354,7 @@ public string StateName;
 - Unity `6000.3`
 - uGUI `2.0.0`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.41.1`
+- Package version: `1.41.2`
 
 ## 참고
 

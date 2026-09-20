@@ -24,7 +24,6 @@ namespace oojjrs.oh
 
         private FocusCallbackInterface[] _focusCallbacks;
         private bool _isQuitAllowed;
-        private bool _isQuitProcessing;
         private PauseCallbackInterface[] _pauseCallbacks;
         private QuitCallbackInterface _quitCallback;
 
@@ -64,19 +63,17 @@ namespace oojjrs.oh
 
             async void Quit()
             {
-                if (_isQuitProcessing)
-                    return;
-
-                _isQuitProcessing = true;
-
                 // wantsToQuit의 현재 요청이 반환된 뒤 확인과 실제 종료를 시작한다.
                 await Task.Yield();
 
-                if (await _quitCallback.OnApplicationQuitAsync() == false)
-                {
-                    _isQuitProcessing = false;
+                if (_isQuitAllowed)
                     return;
-                }
+
+                if (await _quitCallback.OnApplicationQuitAsync() == false)
+                    return;
+
+                if (_isQuitAllowed)
+                    return;
 
                 _isQuitAllowed = true;
 
