@@ -1,5 +1,6 @@
 #if UNITY_EDITOR_WIN
 using System;
+using System.Runtime.InteropServices;
 using UnityEditor;
 using UnityEditor.ShortcutManagement;
 using UnityEngine;
@@ -10,6 +11,9 @@ namespace oojjrs.oh
     internal static class GameViewFullscreen
     {
         private const string MenuPath = "Tools/Oh/Game View Fullscreen";
+        private const int ScrollLockVirtualKey = 0x91;
+
+        private static readonly uint _processId = (uint)System.Diagnostics.Process.GetCurrentProcess().Id;
 
         private static bool __active;
         private static EditorWindow __cursorRestoreGameView;
@@ -27,6 +31,8 @@ namespace oojjrs.oh
         private static EditorWindow __sourceRefreshGameView;
         private static double __sourceRefreshTime;
         private static bool __unsupportedWarningShown;
+        private static bool _scrollLockWasDown;
+        private static bool _suppressShortcutUntilRelease;
 
         private static bool IsOpen => __active;
 
@@ -95,6 +101,8 @@ namespace oojjrs.oh
         {
             ClearPendingCursorRestore();
             ClearPendingSourceRefresh();
+
+            _scrollLockWasDown = GetAsyncKeyState(ScrollLockVirtualKey) < 0;
 
             __previousFocusedWindow = EditorWindow.focusedWindow;
             __cursorLockMode = Cursor.lockState;
@@ -246,11 +254,21 @@ namespace oojjrs.oh
         [Shortcut(MenuPath, KeyCode.ScrollLock)]
         private static void ToggleShortcut()
         {
+            if (_suppressShortcutUntilRelease)
+                return;
+
+            if (__active)
+            {
+                _scrollLockWasDown = true;
+                _suppressShortcutUntilRelease = true;
+            }
+
             EditorApplication.ExecuteMenuItem(MenuPath);
         }
 
         private static void Update()
         {
+            UpdateScrollLock();
             UpdateSourceRefresh();
             UpdateCursorRestore();
 
@@ -336,6 +354,40 @@ namespace oojjrs.oh
             ClearPendingSourceRefresh();
             RefreshSourceGameView(gameView, false);
         }
+
+        private static void UpdateScrollLock()
+        {
+            var isDown = GetAsyncKeyState(ScrollLockVirtualKey) < 0;
+            if (isDown == false)
+                _suppressShortcutUntilRelease = false;
+
+            if (isDown && (_scrollLockWasDown == false) && IsEditorForeground())
+            {
+                var focusedWindow = EditorWindow.focusedWindow;
+                if (((__active == true) && (focusedWindow == __fullscreenGameView)) || ((__active == false) && EditorApplication.isPlaying && UnityEditorFullscreenInternals.IsGameView(focusedWindow)))
+                {
+                    _suppressShortcutUntilRelease = true;
+                    EditorApplication.ExecuteMenuItem(MenuPath);
+                }
+            }
+
+            _scrollLockWasDown = isDown;
+        }
+
+        private static bool IsEditorForeground()
+        {
+            var foregroundWindow = GetForegroundWindow();
+            return (foregroundWindow != IntPtr.Zero) && (GetWindowThreadProcessId(foregroundWindow, out var processId) != 0) && (processId == _processId);
+        }
+
+        [DllImport("user32.dll")]
+        private static extern short GetAsyncKeyState(int virtualKey);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll")]
+        private static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);
 
         [MenuItem(MenuPath, true)]
         private static bool ValidateToggle()
