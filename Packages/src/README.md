@@ -28,7 +28,7 @@
 - `MyStableEnumAttribute`로 문자열 필드에 enum 이름을 저장하는 에디터 드롭다운 제공
 - `MaxSizeLimiter`로 `RectTransform`의 최대 너비와 높이를 축별로 제한
 - `GameViewFullscreen`으로 Windows Editor에서 Scroll Lock을 눌러 Game View를 모니터 전체화면으로 전환
-- `Tools > Oh > Resave All Assets`에서 Assets 아래 Unity native 직렬화 에셋과 프리팹·씬·Input Actions·Sprite Atlas V2를 로드하고 원래 경로에 저장. 코드·원본 미디어는 제외. 저장 실패 시 건너뛰거나 중단할 수 있으며 이미 저장한 파일은 유지
+- `Tools > Oh > Resave All Assets`에서 Assets와 ProjectSettings 아래 Unity native 직렬화 에셋과 프리팹·씬·Input Actions·Sprite Atlas V2를 로드하고 원래 경로에 저장. 코드·원본 미디어는 제외. 저장 실패 시 건너뛰거나 중단할 수 있으며 이미 저장한 파일은 유지
 - `WindowSizeDetector`로 화면 크기 변경 시 너비와 높이를 콜백에 전달
 - `DisplayDetector`로 현재 모니터 이동, 모니터 설정 변경, 연결·해제를 하나의 변경 콜백에 전달
 - `InputDetector`로 키보드, 마우스, 게임패드 버튼 입력 경로를 콜백에 전달
@@ -354,7 +354,7 @@ public string StateName;
 - Unity `6000.3`
 - uGUI `2.0.0`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.41.3`
+- Package version: `1.41.4`
 
 ## 참고
 

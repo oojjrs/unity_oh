@@ -14,7 +14,10 @@ namespace oojjrs.oh
 {
     public static class AssetResaver
     {
+        private const string AssetsPathPrefix = "Assets/";
         private const string MenuPath = "Tools/Oh/Resave All Assets";
+        private const string ProjectSettingsPath = "ProjectSettings";
+        private const string ProjectSettingsPathPrefix = ProjectSettingsPath + "/";
 
         [MenuItem(MenuPath, true)]
         private static bool CanResaveAll()
@@ -22,9 +25,14 @@ namespace oojjrs.oh
             return (EditorApplication.isPlayingOrWillChangePlaymode == false) && (EditorApplication.isCompiling == false) && (EditorApplication.isUpdating == false);
         }
 
+        private static string[] GetSaveTargetPaths()
+        {
+            return AssetDatabase.GetAllAssetPaths().Concat(Directory.EnumerateFiles(ProjectSettingsPath, "*.asset", SearchOption.AllDirectories).Select(path => path.Replace('\\', '/'))).Where(IsSaveTarget).Distinct(StringComparer.Ordinal).OrderBy(path => path, StringComparer.Ordinal).ToArray();
+        }
+
         private static bool IsSaveTarget(string path)
         {
-            if ((path.StartsWith("Assets/", StringComparison.Ordinal) == false) || AssetDatabase.IsValidFolder(path))
+            if (((path.StartsWith(AssetsPathPrefix, StringComparison.Ordinal) == false) && (path.StartsWith(ProjectSettingsPathPrefix, StringComparison.Ordinal) == false)) || AssetDatabase.IsValidFolder(path))
                 return false;
 
             switch (Path.GetExtension(path).ToLowerInvariant())
@@ -44,14 +52,14 @@ namespace oojjrs.oh
         [MenuItem(MenuPath, false, 110)]
         private static void ResaveAll()
         {
-            var paths = AssetDatabase.GetAllAssetPaths().Where(IsSaveTarget).OrderBy(path => path, StringComparer.Ordinal).ToArray();
+            var paths = GetSaveTargetPaths();
             if (paths.Length == 0)
             {
-                EditorUtility.DisplayDialog("에셋 다시 저장", "Assets 아래에 저장할 에셋이 없습니다.", "확인");
+                EditorUtility.DisplayDialog("에셋 다시 저장", "Assets와 ProjectSettings 아래에 저장할 에셋이 없습니다.", "확인");
                 return;
             }
 
-            if (EditorUtility.DisplayDialog("에셋 다시 저장", $"Unity 직렬화 에셋 {paths.Length}개를 로드하고 원래 경로에 저장합니다.\n코드와 원본 미디어 파일은 제외합니다.\n대상 씬이 열려 있으면 현재 편집 내용도 저장합니다.\n중단해도 이미 저장한 파일은 유지됩니다.", "저장", "취소") == false)
+            if (EditorUtility.DisplayDialog("에셋 다시 저장", $"Assets와 ProjectSettings의 Unity 직렬화 에셋 {paths.Length}개를 로드하고 원래 경로에 저장합니다.\n코드와 원본 미디어 파일은 제외합니다.\n대상 파일에 현재 편집 내용이 있으면 함께 저장합니다.\n중단해도 이미 저장한 파일은 유지됩니다.", "저장", "취소") == false)
                 return;
 
             if (PrefabStageUtility.GetCurrentPrefabStage() != null)
@@ -116,7 +124,11 @@ namespace oojjrs.oh
                         EditorUtility.SetDirty(asset);
                     }
 
-                    AssetDatabase.SaveAssetIfDirty(new GUID(AssetDatabase.AssetPathToGUID(path)));
+                    var guid = AssetDatabase.AssetPathToGUID(path);
+                    if (string.IsNullOrEmpty(guid))
+                        AssetDatabase.SaveAssets();
+                    else
+                        AssetDatabase.SaveAssetIfDirty(new GUID(guid));
                     break;
             }
         }
