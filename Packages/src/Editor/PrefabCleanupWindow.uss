@@ -1,0 +1,36 @@
+.prefab-cleanup-window {
+    flex-grow: 1;
+    padding-top: 6px;
+    padding-right: 6px;
+    padding-bottom: 6px;
+    padding-left: 6px;
+}
+
+.prefab-cleanup-toolbar {
+    margin-bottom: 4px;
+}
+
+.prefab-cleanup-status {
+    margin-bottom: 4px;
+}
+
+.prefab-cleanup-list {
+    flex-grow: 1;
+    min-height: 160px;
+}
+
+.prefab-cleanup-issue-row {
+    flex-shrink: 0;
+}
+
+.prefab-cleanup-issue-toggle {
+    flex-grow: 1;
+}
+
+.prefab-cleanup-spacer {
+    flex-grow: 1;
+}
+
+.prefab-cleanup-footer {
+    margin-top: 4px;
+}

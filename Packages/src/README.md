@@ -28,6 +28,7 @@
 - `MyStableEnumAttribute`로 문자열 필드에 enum 이름을 저장하는 에디터 드롭다운 제공
 - `MaxSizeLimiter`로 `RectTransform`의 최대 너비와 높이를 축별로 제한
 - `GameViewFullscreen`으로 Windows Editor에서 Scroll Lock을 눌러 Game View를 모니터 전체화면으로 전환
+- `Tools > Oh > Prefab Cleanup`에서 Assets 전체 또는 Project 창에서 선택한 프리팹·폴더를 검사하고 Missing Script, 누락된 `SerializeReference` 타입, 미사용 Prefab Override를 선택적으로 정리. 검사는 프리팹을 저장하지 않으며 일반 null 참조는 자동 정리하지 않음
 - `Tools > Oh > Resave All Assets`에서 Assets와 ProjectSettings 아래 Unity native 직렬화 에셋과 프리팹·씬·Input Actions·Sprite Atlas V2를 로드하고 원래 경로에 저장. 코드·원본 미디어는 제외. 저장 실패 시 건너뛰거나 중단할 수 있으며 이미 저장한 파일은 유지
 - `WindowSizeDetector`로 화면 크기 변경 시 너비와 높이를 콜백에 전달
 - `DisplayDetector`로 현재 모니터 이동, 모니터 설정 변경, 연결·해제를 하나의 변경 콜백에 전달
@@ -120,6 +121,16 @@ Windows Unity Editor에서 Scroll Lock을 누르거나 `Tools > OH > Game View F
 - Scroll Lock, Alt+F4, 스크립트 재컴파일, Domain Reload, Unity Editor 종료 시 생성한 창을 정리하고 원본 Game View의 렌더 크기·확대 영역과 이전 포커스·커서 상태를 복원한다.
 - 원본 Game View는 도킹 위치에 그대로 남으므로 전체화면 중 변경한 Game View 설정은 원본으로 복사되지 않으며, 원본이 백그라운드에서 함께 렌더링될 수 있다.
 - Unity Editor 내부 창 API를 사용하며 Unity `6000.4.5f1`에서 검증했다. 내부 API가 달라진 버전에서는 원본 Game View를 변경하지 않고 경고를 한 번 출력한 뒤 기능을 비활성화한다.
+
+## PrefabCleanup
+
+`Tools > Oh > Prefab Cleanup`은 Assets 전체 또는 Project 창에서 선택한 프리팹과 폴더를 대상으로 다음 문제를 검사한다.
+
+- GameObject의 Missing Script 컴포넌트
+- 컴포넌트의 누락된 `SerializeReference` 타입 데이터
+- Prefab Variant와 중첩 프리팹 인스턴스의 미사용 Override
+
+검사는 `PrefabUtility.LoadPrefabContents`로 연 격리 Scene에서 수행한 변경을 저장하지 않고 버린다. 결과에서 선택한 문제를 정리할 때만 대상 프리팹을 다시 열어 Unity 공식 정리 API를 실행하고, 실제로 변경된 프리팹만 `PrefabUtility.SaveAsPrefabAsset`으로 저장한다. 일반 Object 필드의 null은 의도적으로 비워 둔 값과 구분하지 못할 수 있으므로 검사와 자동 정리 대상에서 제외한다. 작업을 중단하면 이미 저장한 프리팹은 유지된다.
 
 ## MaxSizeLimiter
 
@@ -354,7 +365,7 @@ public string StateName;
 - Unity `6000.3`
 - uGUI `2.0.0`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.41.4`
+- Package version: `1.42.0`
 
 ## 참고
 
