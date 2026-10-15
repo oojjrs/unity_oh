@@ -11,6 +11,7 @@
 
 ## 포함 기능
 
+- `MySettings.Local`·`Cloud`로 계정별 파일 설정 저장과 타입별 Get/Set 제공
 - `Component`, `GameObject`, `Transform`, `Animator`, `AudioMixer` 등을 위한 확장 메서드
 - `AnimatorExtensions`에서 enum 값을 Animator integer 파라미터로 저장하고 다시 enum으로 읽는 `SetIntegerSafety<T>`, `GetIntegerSafety<T>` 오버로드 제공
 - `MyAnimator`에서 enum 값을 Action integer 파라미터로 재생하는 `aaPlayAction<T>`, `aaPlayActionOnce<T>` 오버로드 제공
@@ -39,6 +40,13 @@
 - `ApplicationMonitor`로 Focus, Pause, Quit 생명주기를 같은 GameObject의 복수 콜백에 전달
 - `IntervalTicker`와 `OneSecondTicker`로 timeScale 반영 여부를 선택할 수 있는 반복 Tick 제공
 - 단일 동작만 허용하는 런타임 컴포넌트의 동일 GameObject 중복 부착 방지
+
+## MySettings
+
+메인 스레드에서 `MySettings.Initialize(accountId)`를 먼저 호출한다.
+두 파일은 `persistentDataPath/Accounts/<accountId>/`에 저장한다.
+`local.settings`는 로컬 전용, `cloud.settings`는 플랫폼 동기화 대상이다.
+최초 초기화 후에는 ID에 관계없이 재호출을 무시하고 기존 계정을 유지한다.
 
 ## MyApp
 
@@ -365,7 +373,7 @@ public string StateName;
 - Unity `6000.3`
 - uGUI `2.0.0`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.42.0`
+- Package version: `1.43.0`
 
 ## 참고
 
