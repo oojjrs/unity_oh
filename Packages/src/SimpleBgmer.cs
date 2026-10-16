@@ -33,20 +33,16 @@ namespace oojjrs.oh
             PlaybackPositions.Clear();
         }
 
+        private void LateUpdate()
+        {
+            if (_rememberPlaybackPosition && (__instance == this))
+                RememberPlaybackPosition(GetComponent<AudioSource>());
+        }
+
         private void OnDestroy()
         {
             if (__instance == this)
                 __instance = null;
-        }
-
-        private void OnDisable()
-        {
-            if (__instance == this)
-            {
-                var audioSource = GetComponent<AudioSource>();
-                if (audioSource != null)
-                    RememberPlaybackPosition(audioSource);
-            }
         }
 
         private IEnumerator Start()

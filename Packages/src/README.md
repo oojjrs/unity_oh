@@ -24,7 +24,7 @@
 - `SimpleLog`를 통한 Unity 생명주기와 애플리케이션 상태 로그 출력
 - `SimpleBgmer.PlaybackPositionSamples`로 재생 위치를 샘플 단위로 조회
 - `Remember Playback Position`을 켜면 앱 실행 중 곡별 위치를 기억
-- 음악 교체·중단 시 위치를 저장하고, 재생 시 복원하며 첫 반복 대기를 보정
+- 매 프레임 재생 위치를 보관하고, 재개 시 복원하며 첫 반복 대기를 보정
 - 재개 옵션으로 이어 재생할 때만 페이드인(기본 1초, 시간 설정 가능)
 - 코루틴 기반 컴포넌트에서 `yield return` 복귀 후 `this`와 캐시된 Unity 객체 접근 방지
 - `MyUpdater` named invoker의 자연 종료, 명시 취소, 즉시 완료 시 실행 이름 등록 정리
@@ -377,7 +377,7 @@ public string StateName;
 - Unity `6000.3`
 - uGUI `2.0.0`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.43.1`
+- Package version: `1.43.2`
 
 ## 참고
 
