@@ -47,10 +47,11 @@
 
 ## MySettings
 
-메인 스레드에서 `MySettings.Initialize(accountId)`를 먼저 호출한다.
+`Local`·`Cloud`는 `MySettings.Initialize(accountId)` 후 사용한다.
+초기화는 메인 스레드에서 한 번만 적용되며 이후 재호출을 무시한다.
 두 파일은 `persistentDataPath/Accounts/<accountId>/`에 저장한다.
 `local.settings`는 로컬 전용, `cloud.settings`는 플랫폼 동기화 대상이다.
-최초 초기화 후에는 ID에 관계없이 재호출을 무시하고 기존 계정을 유지한다.
+`Dev`의 Enum/Flag Get/Set은 초기화 없이 메인 스레드에서 `PlayerPrefs`를 쓴다.
 
 ## MyApp
 
@@ -377,7 +378,7 @@ public string StateName;
 - Unity `6000.3`
 - uGUI `2.0.0`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.43.2`
+- Package version: `1.44.0`
 
 ## 참고
 

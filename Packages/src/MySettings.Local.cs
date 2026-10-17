@@ -35,16 +35,6 @@ public static partial class MySettings
             return LocalStore.Get(key, defValue, Values.ParseDateTime);
         }
 
-        public static T GetDebugEnum<T>(string name, T defValue = default) where T : struct, Enum
-        {
-            return MyEnv.IsDevelopmentBuild() ? GetEnum("d." + name, defValue) : defValue;
-        }
-
-        public static bool GetDebugFlag(string name, bool defValue = false)
-        {
-            return MyEnv.IsDevelopmentBuild() && (GetBool("d." + name, defValue) || System.IO.File.Exists("$" + name));
-        }
-
         public static double GetDouble(string key, double defValue = 0)
         {
             return LocalStore.Get(key, defValue, Values.ParseDouble);
@@ -143,16 +133,6 @@ public static partial class MySettings
         public static void SetDateTime(string key, DateTime value)
         {
             LocalStore.Set(key, Values.Format(value));
-        }
-
-        public static void SetDebugEnum<T>(string name, T value) where T : struct, Enum
-        {
-            SetEnum("d." + name, value);
-        }
-
-        public static void SetDebugFlag(string name, bool value)
-        {
-            SetBool("d." + name, value);
         }
 
         public static void SetDouble(string key, double value)
