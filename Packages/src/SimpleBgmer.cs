@@ -1,6 +1,4 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace oojjrs.oh
@@ -11,6 +9,8 @@ namespace oojjrs.oh
     public class SimpleBgmer : MonoBehaviour
     {
         private static SimpleBgmer __instance;
+        private static AudioClip __playbackClip;
+        private static int __playbackPositionSamples;
         [SerializeField]
         private bool _debugLog;
         [SerializeField]
@@ -22,21 +22,25 @@ namespace oojjrs.oh
         [SerializeField]
         private bool _rememberPlaybackPosition;
 
-        private static Dictionary<AudioClip, int> PlaybackPositions { get; } = new();
-
+        private AudioSource AudioSource { get; set; }
         private bool IsFadingOut { get; set; }
-        public int PlaybackPositionSamples => GetComponent<AudioSource>().timeSamples;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetPlaybackPositions()
+        private static void ResetPlaybackPosition()
         {
-            PlaybackPositions.Clear();
+            __playbackClip = null;
+            __playbackPositionSamples = 0;
+        }
+
+        private void Awake()
+        {
+            AudioSource = GetComponent<AudioSource>();
         }
 
         private void LateUpdate()
         {
-            if (_rememberPlaybackPosition && (__instance == this))
-                RememberPlaybackPosition(GetComponent<AudioSource>());
+            if (__instance == this)
+                RememberPlaybackPosition();
         }
 
         private void OnDestroy()
@@ -47,118 +51,131 @@ namespace oojjrs.oh
 
         private IEnumerator Start()
         {
-            var audioSource = GetComponent<AudioSource>();
+            if (__instance != null)
+                yield return ReplaceCoroutine(__instance);
 
-            var previous = __instance;
-            if (previous != null)
-            {
-                if (_debugLog)
-                    Debug.Log($"{name}> Replacing BGM: previous={__instance.name}.", this);
-
-                previous.IsFadingOut = true;
-                var s = previous.GetComponent<AudioSource>();
-                var time = Time.time;
-                if (s != null)
-                {
-                    var v = s.volume;
-                    while (Time.time - time < _fadeoutTimeSeconds)
-                    {
-                        s.volume = Mathf.Lerp(v, 0, Mathf.Clamp01((Time.time - time) / _fadeoutTimeSeconds));
-
-                        yield return null;
-
-                        if (this == null)
-                            yield break;
-
-                        if (s == null)
-                            break;
-                    }
-                }
-
-                if (s != null)
-                    previous.RememberPlaybackPosition(s);
-
-                previous.DestroyObjectSafety();
-
-                if (_debugLog)
-                    Debug.Log($"{name}> Previous BGM fade-out completed.", this);
-            }
-
-            if (this == null || audioSource == null)
+            if ((this == null) || (AudioSource == null))
                 yield break;
 
-            var startPositionSamples = 0;
-            if (_rememberPlaybackPosition && (audioSource.clip != null) && PlaybackPositions.TryGetValue(audioSource.clip, out var positionSamples))
-                startPositionSamples = Mathf.Clamp(positionSamples, 0, Mathf.Max(audioSource.clip.samples - 1, 0));
+            var startPositionSamples = PreparePlaybackPosition();
+            if ((startPositionSamples > 0) && (_fadeinTimeSeconds > 0))
+                _ = StartCoroutine(FadeinCoroutine());
 
-            if (_rememberPlaybackPosition && (startPositionSamples > 0) && (_fadeinTimeSeconds > 0))
-                _ = StartCoroutine(FadeinCoroutine(audioSource));
-
-            audioSource.Play();
-            if (audioSource.clip != null)
-                audioSource.timeSamples = startPositionSamples;
+            AudioSource.Play();
+            if (AudioSource.clip != null)
+                AudioSource.timeSamples = startPositionSamples;
 
             __instance = this;
 
             if (_debugLog)
-                Debug.Log($"{name}> BGM started: clip={audioSource.clip?.name ?? "None"}, loop={audioSource.loop}.", this);
+                Debug.Log($"{name}> BGM STARTED : CLIP={((AudioSource.clip != null) ? AudioSource.clip.name : "NONE")}, LOOP={AudioSource.loop}", this);
 
-            if (audioSource.loop)
+            if (AudioSource.loop)
             {
-                yield return new WaitUntil(() => this == null || audioSource == null);
-            }
-            else
-            {
-                if (audioSource.clip == null)
-                    yield break;
+                yield return new WaitUntil(() => (this == null) || (AudioSource == null));
 
-                var remainingTimeSeconds = audioSource.clip.length - (float)startPositionSamples / audioSource.clip.frequency;
-                while (true)
+                if (this != null)
                 {
-                    yield return new WaitForSeconds(remainingTimeSeconds + Mathf.Max(_intervalTimeSeconds, 0));
-
-                    if (this == null || audioSource == null || audioSource.clip == null)
-                        yield break;
-
-                    audioSource.Play();
-                    remainingTimeSeconds = audioSource.clip.length;
-
                     if (_debugLog)
-                        Debug.Log($"{name}> BGM replayed: clip={audioSource.clip.name}.", this);
+                        Debug.Log($"{name}> BGM COMPLETED AND WILL BE DESTROYED.", this);
+
+                    gameObject.DestroySafety();
                 }
             }
-
-            if (this != null)
+            else if (AudioSource.clip != null)
             {
-                if (_debugLog)
-                    Debug.Log($"{name}> BGM completed and will be destroyed.", this);
-
-                gameObject.DestroySafety();
+                yield return ReplayCoroutine(startPositionSamples);
             }
         }
 
-        private IEnumerator FadeinCoroutine(AudioSource audioSource)
+        private IEnumerator FadeinCoroutine()
         {
             var time = Time.time;
-            var volume = audioSource.volume;
+            var volume = AudioSource.volume;
             while ((IsFadingOut == false) && (Time.time - time < _fadeinTimeSeconds))
             {
-                audioSource.volume = Mathf.Lerp(0, volume, Mathf.Clamp01((Time.time - time) / _fadeinTimeSeconds));
+                AudioSource.volume = Mathf.Lerp(0, volume, Mathf.Clamp01((Time.time - time) / _fadeinTimeSeconds));
 
                 yield return null;
 
-                if ((this == null) || (audioSource == null))
+                if ((this == null) || (AudioSource == null))
                     yield break;
             }
 
             if (IsFadingOut == false)
-                audioSource.volume = volume;
+                AudioSource.volume = volume;
         }
 
-        private void RememberPlaybackPosition(AudioSource audioSource)
+        private int PreparePlaybackPosition()
         {
-            if (_rememberPlaybackPosition && (audioSource.clip != null))
-                PlaybackPositions[audioSource.clip] = audioSource.timeSamples;
+            var clip = AudioSource.clip;
+            if ((clip != null) && _rememberPlaybackPosition && (__playbackClip == clip))
+                return Mathf.Clamp(__playbackPositionSamples, 0, Mathf.Max(clip.samples - 1, 0));
+
+            __playbackClip = clip;
+            __playbackPositionSamples = 0;
+            return 0;
+        }
+
+        private void RememberPlaybackPosition()
+        {
+            if (_rememberPlaybackPosition && (AudioSource != null) && (AudioSource.clip != null))
+            {
+                __playbackClip = AudioSource.clip;
+                __playbackPositionSamples = AudioSource.timeSamples;
+            }
+        }
+
+        private IEnumerator ReplaceCoroutine(SimpleBgmer previous)
+        {
+            if (_debugLog)
+                Debug.Log($"{name}> REPLACING BGM : PREVIOUS={previous.name}", this);
+
+            previous.IsFadingOut = true;
+            var audioSource = previous.AudioSource;
+            if (audioSource != null)
+            {
+                var time = Time.time;
+                var volume = audioSource.volume;
+                while (Time.time - time < _fadeoutTimeSeconds)
+                {
+                    audioSource.volume = Mathf.Lerp(volume, 0, Mathf.Clamp01((Time.time - time) / _fadeoutTimeSeconds));
+
+                    yield return null;
+
+                    if (this == null)
+                        yield break;
+
+                    if ((previous == null) || (audioSource == null))
+                        break;
+                }
+            }
+
+            if (previous != null)
+                previous.RememberPlaybackPosition();
+
+            previous.DestroyObjectSafety();
+
+            if (_debugLog)
+                Debug.Log($"{name}> PREVIOUS BGM FADE-OUT COMPLETED.", this);
+        }
+
+        private IEnumerator ReplayCoroutine(int startPositionSamples)
+        {
+            var remainingTimeSeconds = AudioSource.clip.length - (float)startPositionSamples / AudioSource.clip.frequency;
+            while (true)
+            {
+                yield return new WaitForSeconds(remainingTimeSeconds + Mathf.Max(_intervalTimeSeconds, 0));
+
+                if ((this == null) || (AudioSource == null) || (AudioSource.clip == null))
+                    yield break;
+
+                AudioSource.Play();
+                remainingTimeSeconds = AudioSource.clip.length;
+
+                if (_debugLog)
+                    Debug.Log($"{name}> BGM REPLAYED : CLIP={AudioSource.clip.name}", this);
+            }
         }
     }
 }

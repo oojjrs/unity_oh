@@ -22,8 +22,8 @@
 - `AnimatorFinderFromVariable`, `MyAnimatorFinderFromVariable`로 Inspector 지정 Animator 참조 제공
 - `SingletonMonoBehaviourT`, `MyUpdater`, `LifeTime` 같은 실행 흐름 보조 타입
 - `SimpleLog`를 통한 Unity 생명주기와 애플리케이션 상태 로그 출력
-- `SimpleBgmer.PlaybackPositionSamples`로 재생 위치를 샘플 단위로 조회
-- `Remember Playback Position`을 켜면 앱 실행 중 곡별 위치를 기억
+- 다른 곡으로 바뀌거나 재개 옵션을 끄면 이전 기록을 버리고 처음부터 재생
+- `Remember Playback Position`을 켜면 마지막 곡의 위치만 기억
 - 매 프레임 재생 위치를 보관하고, 재개 시 복원하며 첫 반복 대기를 보정
 - 재개 옵션으로 이어 재생할 때만 페이드인(기본 1초, 시간 설정 가능)
 - 코루틴 기반 컴포넌트에서 `yield return` 복귀 후 `this`와 캐시된 Unity 객체 접근 방지
@@ -378,7 +378,7 @@ public string StateName;
 - Unity `6000.3`
 - uGUI `2.0.0`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.44.0`
+- Package version: `1.44.1`
 
 ## 참고
 
