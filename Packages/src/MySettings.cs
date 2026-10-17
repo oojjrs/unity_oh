@@ -10,6 +10,7 @@ public static partial class MySettings
     private static Store _localStore;
 
     private static Store CloudStore => GetStore(ref _cloudStore, "cloud.settings");
+    public static bool IsInitialized => _accountPath != null;
     private static Store LocalStore => GetStore(ref _localStore, "local.settings");
 
     private static Store GetStore(ref Store store, string fileName)

@@ -39,7 +39,7 @@
 - `DisplayDetector`로 현재 모니터 이동, 모니터 설정 변경, 연결·해제를 하나의 변경 콜백에 전달
 - `InputDetector`로 키보드, 마우스, 게임패드 버튼 입력 경로를 콜백에 전달
 - `DeviceDetector`로 장치 연결 상태와 현재 입력 장치를 키보드, 마우스, PlayStation, Xbox, 기타 게임패드 `DeviceEnum`으로 구분
-- `DevelopmentBuildPlayerPrefsResetter`로 개발 빌드의 애플리케이션 버전 변경 시 `PlayerPrefs` 초기화
+- `Tools > Oh`의 수동 메뉴로 현재 계정의 설정 초기화
 - `CoreSingleton`으로 애플리케이션 초기화와 Startup 이후 진입 절차를 하나의 영구 Core에 구성
 - `ApplicationMonitor`로 Focus, Pause, Quit 생명주기를 같은 GameObject의 복수 콜백에 전달
 - `IntervalTicker`와 `OneSecondTicker`로 timeScale 반영 여부를 선택할 수 있는 반복 Tick 제공
@@ -47,11 +47,11 @@
 
 ## MySettings
 
-`Local`·`Cloud`는 `MySettings.Initialize(accountId)` 후 사용한다.
-초기화는 메인 스레드에서 한 번만 적용되며 이후 재호출을 무시한다.
-두 파일은 `persistentDataPath/Accounts/<accountId>/`에 저장한다.
+`MySettings.Initialize(accountId)`는 메인 스레드에서 한 번만 적용된다.
+계정 파일은 `persistentDataPath/Accounts/<accountId>/`에 저장한다.
 `local.settings`는 로컬 전용, `cloud.settings`는 플랫폼 동기화 대상이다.
-`Dev`의 Enum/Flag Get/Set은 초기화 없이 메인 스레드에서 `PlayerPrefs`를 쓴다.
+`IsInitialized`로 계정 설정의 초기화 여부를 확인한다.
+`Dev`는 초기화 없이 메인 스레드에서 `PlayerPrefs`를 쓰며 버전 변경에도 유지된다.
 
 ## MyApp
 
@@ -76,7 +76,6 @@ MyApp.GetVersionString(MyApp.VersionDisplayEnum.Company | MyApp.VersionDisplayEn
 
 | Component | Purpose | Execution order |
 | --- | --- | ---: |
-| `DevelopmentBuildPlayerPrefsResetter` | 개발 빌드 버전 변경 시 `PlayerPrefs` 초기화 | `-32000` |
 | `CoreSingleton` | 싱글턴 확정과 Startup 진입 절차 실행 | `-500` |
 | `ApplicationMonitor` | Focus, Pause, Quit 콜백 전달 | `-490` |
 | `SolidObject` | Scene 전환 후 Core GameObject 유지 | `0` |
@@ -272,18 +271,15 @@ public class DeviceDetectorReceiver : MonoBehaviour, DeviceDetector.CallbackInte
 - 입력으로 현재 장치를 전환할 때는 입력 크기 `0.1` 이상의 실제 상태 변화만 처리하며, 장치 연결은 입력 여부와 관계없이 새 장치로 즉시 전환한다.
 - Inspector의 `Debug Log`를 켜면 컴포넌트 활성화 상태, 공개 콜백 호출, 장치 종류와 레이아웃·ID, 종류별 변경 후 장치 수, 현재 장치 전환을 추적할 수 있다. 기본값은 꺼짐이며 입력 이벤트가 무시되는 핫패스에는 로그를 남기지 않는다.
 - `DisplayDetector`, `InputDetector`, `WindowSizeDetector`, `MyUpdater`, `ChronoInterfaceMachine`, `SimpleBgmer`, `AutoDisabler`, `LifeTime`도 Inspector의 `Debug Log`를 켰을 때만 입력 전달, 상태 전환, 예약·취소·완료 같은 상세 진단 로그를 출력한다.
-- 씬 전환, Singleton 수명, 영구 오브젝트 존속, 개발 빌드 데이터 초기화처럼 시스템 흐름 복원에 필요한 기존 로그와 모든 경고는 디버그 설정과 관계없이 항상 출력한다.
+- 씬 전환, Singleton 수명, 영구 오브젝트 존속처럼 시스템 흐름 복원에 필요한 기존 로그와 모든 경고는 디버그 설정과 관계없이 항상 출력한다.
 - 프로젝트의 Active Input Handling은 `Input System Package (New)` 또는 `Both`로 설정해야 한다.
 
-## DevelopmentBuildPlayerPrefsResetter
+## MySettings 초기화 도구
 
-`DevelopmentBuildPlayerPrefsResetter`는 개발 빌드에서 `Application.version`을 기록하고, 이전 실행에서 기록한 버전과 달라졌을 때 `PlayerPrefs.DeleteAll()`을 호출하는 일회성 컴포넌트이다.
-
-- `Awake()`에서 한 번 처리한 뒤 컴포넌트를 유지하므로 `CoreSingleton`의 필수 구성으로 계속 둘 수 있다.
-- 최초 실행에는 기존 값을 유지하고 현재 버전만 기록한다.
-- Inspector에서 `Delete On First Run`을 활성화하면 최초 실행에도 전체 값을 삭제한다.
-- Unity Editor 또는 `Debug.isDebugBuild`가 참인 빌드에서만 `PlayerPrefs`를 변경한다.
-- 개별 데이터 마이그레이션이나 이전 버전 보존이 필요하면 애플리케이션의 저장 로직에서 별도로 처리한다.
+`Tools > Oh > Reset Current Account Settings`로 실행한다.
+Play 모드에서 계정 초기화가 끝나면 메뉴가 활성화된다.
+현재 계정의 `Local`·`Cloud`를 비우고 저장한다.
+`Dev`의 `PlayerPrefs` 값은 유지한다.
 
 ## AnimatorExtensions
 
@@ -378,7 +374,7 @@ public string StateName;
 - Unity `6000.3`
 - uGUI `2.0.0`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.44.1`
+- Package version: `1.45.0`
 
 ## 참고
 
