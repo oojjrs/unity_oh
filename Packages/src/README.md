@@ -374,7 +374,7 @@ public string StateName;
 - Unity `6000.3`
 - uGUI `2.0.0`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.45.0`
+- Package version: `1.45.1`
 
 ## 참고
 
