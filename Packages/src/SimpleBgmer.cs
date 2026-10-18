@@ -137,8 +137,8 @@ namespace oojjrs.oh
             if (_debugLog)
             {
                 var clip = (AudioSource != null) ? AudioSource.clip : null;
-                Debug.Log($"{name}> BGM POSITION : PHASE={phase}, INSTANCE={GetInstanceID()}, FRAME={Time.frameCount}, OWNER={(__instance == this)}, REMEMBER={_rememberPlaybackPosition}, FADING={IsFadingOut}, COUNT={_clips.Length}, INDEX={ClipIndex}, CLIP={clip}, CLIP_ID={((clip != null) ? clip.GetInstanceID() : 0)}, PLAYING={((AudioSource != null) && AudioSource.isPlaying)}, SAMPLES={((AudioSource != null) ? AudioSource.timeSamples : -1)}", this);
-                Debug.Log($"{name}> BGM SAVED POSITION : PHASE={phase}, INSTANCE={GetInstanceID()}, FRAME={Time.frameCount}, COUNT={((__playbackClips != null) ? __playbackClips.Length : -1)}, INDEX={__playbackClipIndex}, CLIP={__playbackClip}, CLIP_ID={((__playbackClip != null) ? __playbackClip.GetInstanceID() : 0)}, SAMPLES={__playbackPositionSamples}", this);
+                Debug.Log($"{name}> BGM POSITION : PHASE={phase}, INSTANCE_HASH={GetHashCode()}, FRAME={Time.frameCount}, OWNER={(__instance == this)}, REMEMBER={_rememberPlaybackPosition}, FADING={IsFadingOut}, COUNT={_clips.Length}, INDEX={ClipIndex}, CLIP={clip}, CLIP_HASH={((clip != null) ? clip.GetHashCode() : 0)}, PLAYING={((AudioSource != null) && AudioSource.isPlaying)}, SAMPLES={((AudioSource != null) ? AudioSource.timeSamples : -1)}", this);
+                Debug.Log($"{name}> BGM SAVED POSITION : PHASE={phase}, INSTANCE_HASH={GetHashCode()}, FRAME={Time.frameCount}, COUNT={((__playbackClips != null) ? __playbackClips.Length : -1)}, INDEX={__playbackClipIndex}, CLIP={__playbackClip}, CLIP_HASH={((__playbackClip != null) ? __playbackClip.GetHashCode() : 0)}, SAMPLES={__playbackPositionSamples}", this);
             }
         }
 
@@ -152,7 +152,7 @@ namespace oojjrs.oh
                 if (__playbackClips[index] != _clips[index])
                 {
                     if (_debugLog)
-                        Debug.Log($"{name}> BGM LIST MISMATCH : INSTANCE={GetInstanceID()}, INDEX={index}, SAVED={__playbackClips[index]}, REQUESTED={_clips[index]}, SAVED_ID={((__playbackClips[index] != null) ? __playbackClips[index].GetInstanceID() : 0)}, REQUESTED_ID={((_clips[index] != null) ? _clips[index].GetInstanceID() : 0)}", this);
+                        Debug.Log($"{name}> BGM LIST MISMATCH : INSTANCE_HASH={GetHashCode()}, INDEX={index}, SAVED={__playbackClips[index]}, REQUESTED={_clips[index]}, SAVED_HASH={((__playbackClips[index] != null) ? __playbackClips[index].GetHashCode() : 0)}, REQUESTED_HASH={((_clips[index] != null) ? _clips[index].GetHashCode() : 0)}", this);
 
                     return false;
                 }
@@ -193,7 +193,7 @@ namespace oojjrs.oh
             LogPlaybackPosition("PREPARE");
             var canResume = _rememberPlaybackPosition && (((_clips.Length == 0) && (__playbackClips == null)) || MatchesPlaybackClips());
             if (_debugLog)
-                Debug.Log($"{name}> BGM RESUME CHECK : INSTANCE={GetInstanceID()}, CAN_RESUME={canResume}", this);
+                Debug.Log($"{name}> BGM RESUME CHECK : INSTANCE_HASH={GetHashCode()}, CAN_RESUME={canResume}", this);
 
             if ((_clips.Length > 0) && canResume)
             {
