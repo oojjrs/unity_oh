@@ -29,6 +29,7 @@ namespace oojjrs.oh
         private AudioSource AudioSource { get; set; }
         private int ClipIndex { get; set; }
         private bool IsFadingOut { get; set; }
+        private bool IsPlaybackStopped { get; set; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetPlaybackPosition()
@@ -66,6 +67,9 @@ namespace oojjrs.oh
 
         private void OnDisable()
         {
+            if (_clips.Length > 0)
+                IsPlaybackStopped = true;
+
             LogPlaybackPosition("DISABLED");
         }
 
@@ -167,7 +171,7 @@ namespace oojjrs.oh
             {
                 yield return new WaitWhile(() => (AudioSource != null) && AudioSource.isPlaying);
 
-                if (AudioSource == null)
+                if ((AudioSource == null) || IsPlaybackStopped)
                     yield break;
 
                 LogPlaybackPosition("ADVANCE BEGIN");
@@ -180,7 +184,7 @@ namespace oojjrs.oh
 
                 yield return new WaitForSeconds(Mathf.Max(_intervalTimeSeconds, 0));
 
-                if ((AudioSource == null) || IsFadingOut)
+                if ((AudioSource == null) || IsFadingOut || IsPlaybackStopped)
                     yield break;
 
                 AudioSource.Play();
@@ -216,6 +220,9 @@ namespace oojjrs.oh
 
         private void RememberPlaybackPosition()
         {
+            if (IsPlaybackStopped)
+                return;
+
             if (_rememberPlaybackPosition && (AudioSource != null) && (AudioSource.clip != null))
             {
                 __playbackClip = AudioSource.clip;
