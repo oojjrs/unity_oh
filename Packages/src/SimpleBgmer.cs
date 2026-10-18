@@ -58,8 +58,15 @@ namespace oojjrs.oh
 
         private void OnDestroy()
         {
+            LogPlaybackPosition("DESTROYED");
+
             if (__instance == this)
                 __instance = null;
+        }
+
+        private void OnDisable()
+        {
+            LogPlaybackPosition("DISABLED");
         }
 
         private IEnumerator Start()
@@ -79,6 +86,8 @@ namespace oojjrs.oh
                 AudioSource.timeSamples = startPositionSamples;
 
             __instance = this;
+
+            LogPlaybackPosition("STARTED");
 
             if (_debugLog)
                 Debug.Log($"{name}> BGM STARTED : CLIP={((AudioSource.clip != null) ? AudioSource.clip.name : "NONE")}, LOOP={AudioSource.loop}", this);
@@ -123,6 +132,16 @@ namespace oojjrs.oh
                 AudioSource.volume = volume;
         }
 
+        private void LogPlaybackPosition(string phase)
+        {
+            if (_debugLog)
+            {
+                var clip = (AudioSource != null) ? AudioSource.clip : null;
+                Debug.Log($"{name}> BGM POSITION : PHASE={phase}, INSTANCE={GetInstanceID()}, FRAME={Time.frameCount}, OWNER={(__instance == this)}, REMEMBER={_rememberPlaybackPosition}, FADING={IsFadingOut}, COUNT={_clips.Length}, INDEX={ClipIndex}, CLIP={clip}, CLIP_ID={((clip != null) ? clip.GetInstanceID() : 0)}, PLAYING={((AudioSource != null) && AudioSource.isPlaying)}, SAMPLES={((AudioSource != null) ? AudioSource.timeSamples : -1)}", this);
+                Debug.Log($"{name}> BGM SAVED POSITION : PHASE={phase}, INSTANCE={GetInstanceID()}, FRAME={Time.frameCount}, COUNT={((__playbackClips != null) ? __playbackClips.Length : -1)}, INDEX={__playbackClipIndex}, CLIP={__playbackClip}, CLIP_ID={((__playbackClip != null) ? __playbackClip.GetInstanceID() : 0)}, SAMPLES={__playbackPositionSamples}", this);
+            }
+        }
+
         private bool MatchesPlaybackClips()
         {
             if ((__playbackClips == null) || (__playbackClips.Length != _clips.Length))
@@ -131,7 +150,12 @@ namespace oojjrs.oh
             for (var index = 0; index < _clips.Length; ++index)
             {
                 if (__playbackClips[index] != _clips[index])
+                {
+                    if (_debugLog)
+                        Debug.Log($"{name}> BGM LIST MISMATCH : INSTANCE={GetInstanceID()}, INDEX={index}, SAVED={__playbackClips[index]}, REQUESTED={_clips[index]}, SAVED_ID={((__playbackClips[index] != null) ? __playbackClips[index].GetInstanceID() : 0)}, REQUESTED_ID={((_clips[index] != null) ? _clips[index].GetInstanceID() : 0)}", this);
+
                     return false;
+                }
             }
 
             return true;
@@ -146,9 +170,11 @@ namespace oojjrs.oh
                 if (AudioSource == null)
                     yield break;
 
+                LogPlaybackPosition("ADVANCE BEGIN");
                 ClipIndex = (ClipIndex + 1) % _clips.Length;
                 AudioSource.clip = _clips[ClipIndex];
                 RememberPlaybackPosition();
+                LogPlaybackPosition("ADVANCE SAVED");
                 if (IsFadingOut)
                     yield break;
 
@@ -158,12 +184,17 @@ namespace oojjrs.oh
                     yield break;
 
                 AudioSource.Play();
+                LogPlaybackPosition("NEXT PLAYED");
             }
         }
 
         private int PreparePlaybackPosition()
         {
+            LogPlaybackPosition("PREPARE");
             var canResume = _rememberPlaybackPosition && (((_clips.Length == 0) && (__playbackClips == null)) || MatchesPlaybackClips());
+            if (_debugLog)
+                Debug.Log($"{name}> BGM RESUME CHECK : INSTANCE={GetInstanceID()}, CAN_RESUME={canResume}", this);
+
             if ((_clips.Length > 0) && canResume)
             {
                 ClipIndex = __playbackClipIndex;
@@ -172,8 +203,12 @@ namespace oojjrs.oh
 
             var clip = AudioSource.clip;
             if ((clip != null) && canResume && (__playbackClip == clip))
+            {
+                LogPlaybackPosition("RESUME ACCEPTED");
                 return Mathf.Clamp(__playbackPositionSamples, 0, Mathf.Max(clip.samples - 1, 0));
+            }
 
+            LogPlaybackPosition("RESUME RESET");
             ResetPlaybackPosition();
             __playbackClip = clip;
             return 0;
@@ -190,6 +225,9 @@ namespace oojjrs.oh
             }
             else if (_rememberPlaybackPosition == false)
             {
+                if ((__playbackClip != null) || (__playbackClips != null))
+                    LogPlaybackPosition("REMEMBER OFF RESET");
+
                 ResetPlaybackPosition();
             }
         }
