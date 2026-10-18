@@ -22,10 +22,11 @@
 - `AnimatorFinderFromVariable`, `MyAnimatorFinderFromVariable`로 Inspector 지정 Animator 참조 제공
 - `SingletonMonoBehaviourT`, `MyUpdater`, `LifeTime` 같은 실행 흐름 보조 타입
 - `SimpleLog`를 통한 Unity 생명주기와 애플리케이션 상태 로그 출력
-- 다른 곡으로 바뀌거나 재개 옵션을 끄면 이전 기록을 버리고 처음부터 재생
-- `Remember Playback Position`을 켜면 마지막 곡의 위치만 기억
-- 매 프레임 재생 위치를 보관하고, 재개 시 복원하며 첫 반복 대기를 보정
-- 재개 옵션으로 이어 재생할 때만 페이드인(기본 1초, 시간 설정 가능)
+- `SimpleBgmer`의 `Clips` 배열을 순환 재생하며 곡 사이에 지정 간격 적용
+- 배열이 비어 있으면 기존 `AudioSource`의 단일 곡·ARC 재생 방식 유지
+- `Remember Playback Position`은 같은 곡 목록·순서의 인덱스와 위치 복원
+- 다른 목록·기억 해제 시 초기화하며, 곡 사이 중단은 다음 곡 처음부터 즉시 재개
+- 샘플 위치를 복원해 이어들을 때 페이드인 적용(기본 1초, 시간 설정 가능)
 - 코루틴 기반 컴포넌트에서 `yield return` 복귀 후 `this`와 캐시된 Unity 객체 접근 방지
 - `MyUpdater` named invoker의 자연 종료, 명시 취소, 즉시 완료 시 실행 이름 등록 정리
 - `MyUpdater` 비활성화 시 named invoker 등록을 정리하고 해당 컴포넌트의 모든 코루틴 중단
@@ -374,7 +375,7 @@ public string StateName;
 - Unity `6000.3`
 - uGUI `2.0.0`
 - Package name: `com.oojjrs.oh`
-- Package version: `1.46.0`
+- Package version: `1.46.1`
 
 ## 참고
 

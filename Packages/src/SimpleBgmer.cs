@@ -10,7 +10,11 @@ namespace oojjrs.oh
     {
         private static SimpleBgmer __instance;
         private static AudioClip __playbackClip;
+        private static int __playbackClipIndex;
+        private static AudioClip[] __playbackClips;
         private static int __playbackPositionSamples;
+        [SerializeField]
+        private AudioClip[] _clips = System.Array.Empty<AudioClip>();
         [SerializeField]
         private bool _debugLog;
         [SerializeField]
@@ -23,18 +27,27 @@ namespace oojjrs.oh
         private bool _rememberPlaybackPosition;
 
         private AudioSource AudioSource { get; set; }
+        private int ClipIndex { get; set; }
         private bool IsFadingOut { get; set; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetPlaybackPosition()
         {
             __playbackClip = null;
+            __playbackClipIndex = 0;
+            __playbackClips = null;
             __playbackPositionSamples = 0;
         }
 
         private void Awake()
         {
             AudioSource = GetComponent<AudioSource>();
+
+            if (_clips.Length > 0)
+            {
+                AudioSource.clip = _clips[0];
+                AudioSource.loop = false;
+            }
         }
 
         private void LateUpdate()
@@ -70,7 +83,11 @@ namespace oojjrs.oh
             if (_debugLog)
                 Debug.Log($"{name}> BGM STARTED : CLIP={((AudioSource.clip != null) ? AudioSource.clip.name : "NONE")}, LOOP={AudioSource.loop}", this);
 
-            if (AudioSource.loop)
+            if (_clips.Length > 0)
+            {
+                yield return PlayClipsCoroutine();
+            }
+            else if (AudioSource.loop)
             {
                 yield return new WaitUntil(() => (this == null) || (AudioSource == null));
 
@@ -106,14 +123,59 @@ namespace oojjrs.oh
                 AudioSource.volume = volume;
         }
 
+        private bool MatchesPlaybackClips()
+        {
+            if ((__playbackClips == null) || (__playbackClips.Length != _clips.Length))
+                return false;
+
+            for (var index = 0; index < _clips.Length; ++index)
+            {
+                if (__playbackClips[index] != _clips[index])
+                    return false;
+            }
+
+            return true;
+        }
+
+        private IEnumerator PlayClipsCoroutine()
+        {
+            while (true)
+            {
+                yield return new WaitWhile(() => (AudioSource != null) && AudioSource.isPlaying);
+
+                if (AudioSource == null)
+                    yield break;
+
+                ClipIndex = (ClipIndex + 1) % _clips.Length;
+                AudioSource.clip = _clips[ClipIndex];
+                RememberPlaybackPosition();
+                if (IsFadingOut)
+                    yield break;
+
+                yield return new WaitForSeconds(Mathf.Max(_intervalTimeSeconds, 0));
+
+                if ((AudioSource == null) || IsFadingOut)
+                    yield break;
+
+                AudioSource.Play();
+            }
+        }
+
         private int PreparePlaybackPosition()
         {
+            var canResume = _rememberPlaybackPosition && (((_clips.Length == 0) && (__playbackClips == null)) || MatchesPlaybackClips());
+            if ((_clips.Length > 0) && canResume)
+            {
+                ClipIndex = __playbackClipIndex;
+                AudioSource.clip = _clips[ClipIndex];
+            }
+
             var clip = AudioSource.clip;
-            if ((clip != null) && _rememberPlaybackPosition && (__playbackClip == clip))
+            if ((clip != null) && canResume && (__playbackClip == clip))
                 return Mathf.Clamp(__playbackPositionSamples, 0, Mathf.Max(clip.samples - 1, 0));
 
+            ResetPlaybackPosition();
             __playbackClip = clip;
-            __playbackPositionSamples = 0;
             return 0;
         }
 
@@ -122,7 +184,13 @@ namespace oojjrs.oh
             if (_rememberPlaybackPosition && (AudioSource != null) && (AudioSource.clip != null))
             {
                 __playbackClip = AudioSource.clip;
-                __playbackPositionSamples = AudioSource.timeSamples;
+                __playbackClipIndex = ClipIndex;
+                __playbackClips = _clips;
+                __playbackPositionSamples = ((_clips.Length > 0) && (AudioSource.isPlaying == false)) ? 0 : AudioSource.timeSamples;
+            }
+            else if (_rememberPlaybackPosition == false)
+            {
+                ResetPlaybackPosition();
             }
         }
 
